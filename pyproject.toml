@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "checkforai"
+version = "0.1.0"
+description = ""
+authors = ["Max Spero <mmspero@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "^2.31.0"
+aiohttp = "^3.8.6"
+aiounittest = "^1.4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
