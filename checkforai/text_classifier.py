@@ -22,7 +22,6 @@ class TextClassifier:
         }
         input_json = {
             "input": text,
-            "cid": "1234",
         }
         response = requests.post(API_URL, json=input_json, headers=headers, timeout=10)
         return response.json()
@@ -44,7 +43,6 @@ class TextClassifier:
         }
         input_json = {
             "input": text,
-            "cid": "1234",
         }
         async with aiohttp.ClientSession() as session:
             async with session.post(
