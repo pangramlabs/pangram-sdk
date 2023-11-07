@@ -1,0 +1,24 @@
+# Required
+version: 2
+
+# Set the version of Python
+build:
+  os: ubuntu-20.04  # <- add this line
+  tools:
+    python: "3.10"
+  apt_packages:
+    - python3-pip  # <- add this line
+
+# Install the package from the root
+python:
+  install:
+    - method: pip
+      path: .
+    - requirements: docs/requirements.txt
+
+# Configuration for Sphinx documentation
+sphinx:
+   configuration: docs/conf.py
+   fail_on_warning: true
+
+
