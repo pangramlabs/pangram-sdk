@@ -7,6 +7,15 @@ API_URL = 'https://api.checkfor.ai/inference'
 
 class TextClassifier:
     def __init__(self, api_key: str = None) -> None:
+        """
+        A classifier for text inputs using the checkfor.ai API.
+
+        This class provides synchronous and asynchronous methods to classify text by making API requests.
+
+        :param api_key: The API key for the checkfor.ai service. If not provided, the environment variable CHECKFORAI_API_KEY will be used.
+        :type api_key: str, optional
+        :raises ValueError: If the API key is not provided and not set in the environment.
+        """
         if api_key is None:
             self.api_key = os.getenv('CHECKFORAI_API_KEY')
             if self.api_key is None:
@@ -16,6 +25,16 @@ class TextClassifier:
 
 
     def predict(self, text: str):
+        """
+        Synchronously predict the classification of the given text.
+
+        Sends a POST request to the checkfor.ai API and returns the classification result.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API.
+        :rtype: dict
+        """
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
@@ -29,13 +48,14 @@ class TextClassifier:
 
     async def predict_async(self, text: str):
         """
-        Asynchronous function to send a POST request to the checkfor.ai API.
+        Asynchronously predict the classification of the given text.
 
-        Args:
-            text (str): The text to be classified.
+        This function sends a POST request to the checkfor.ai API.
 
-        Returns:
-            dict: The response from the API as a JSON object.
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API as a JSON object.
+        :rtype: dict
         """
         headers = {
             'Content-Type': 'application/json',
