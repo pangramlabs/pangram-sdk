@@ -31,7 +31,7 @@ The Inference API allows you to submit text and receive a likelihood score. Use 
 
   .. code-block:: http
 
-    POST /inference HTTP/1.1
+    POST https://api.checkfor.ai/v1/classify/text HTTP/1.1
     Host: api.checkfor.ai
     Content-Type: application/json
     x-api-key: your_api_key_here
@@ -78,7 +78,7 @@ The Inference API allows you to submit text and receive a likelihood score. Use 
 
     .. code-block:: http
 
-      POST /batch_inference HTTP/1.1
+      POST https://api.checkfor.ai/v1/classify/text/batch HTTP/1.1
       Host: api.checkfor.ai
       Content-Type: application/json
       x-api-key: your_api_key_here
