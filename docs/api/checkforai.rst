@@ -1,4 +1,4 @@
-Python integration
+Python package
 ==================
 
 checkforai.text\_classifier module

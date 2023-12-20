@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkforai"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Max Spero <mmspero@gmail.com>"]
 readme = "README.md"

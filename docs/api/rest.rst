@@ -1,12 +1,14 @@
 Inference API
 =============
 
-The Inference API allows you to submit text and receive a likelihood score.
+The Inference API allows you to submit text and receive a likelihood score. Use the batch inference API if classifying several texts, as it is more efficient and allows for higher throughput.
 
-.. http:post:: https://api.checkfor.ai/inference
+.. http:post:: https://api.checkfor.ai/v1/classify/text
 
-  :<json string input: The text for which the inference should be made.
-  :>json float likelihood: The likelihood score of the inference.
+  :<json string text: The input text to classify.
+  :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+  :>json string text: The classified text.
+  :>json string prediction: A string representing the classification.
 
   **Request Headers**
 
@@ -22,7 +24,7 @@ The Inference API allows you to submit text and receive a likelihood score.
   .. code-block:: json
 
     {
-      "input": "<text>"
+      "text": "<text>"
     }
 
   **Example Request**
@@ -35,7 +37,7 @@ The Inference API allows you to submit text and receive a likelihood score.
     x-api-key: your_api_key_here
 
     {
-      "input": "The text to analyze"
+      "text": "The text to analyze"
     }
 
   **Example Response**
@@ -43,8 +45,66 @@ The Inference API allows you to submit text and receive a likelihood score.
   .. code-block:: json
 
     {
-      "likelihood": 0.92
+      "text": "The text to analyze",
+      "prediction": "Likely AI",
+      "ai_likelihood": 0.92
     }
+
+.. http:post:: https://api.checkfor.ai/v1/classify/text/batch
+
+  :<json array texts: The input texts to classify.
+  :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction".
+
+  **Batch Inference**
+
+    **Request Headers**
+
+    .. code-block:: json
+
+      {
+        "Content-Type": "application/json",
+        "x-api-key": "<api-key>"
+      }
+
+    **Request Body**
+
+    .. code-block:: json
+
+      {
+        "text": ["<text1>", "<text2>", "..."]
+      }
+
+    **Example Request**
+
+    .. code-block:: http
+
+      POST /batch_inference HTTP/1.1
+      Host: api.checkfor.ai
+      Content-Type: application/json
+      x-api-key: your_api_key_here
+
+      {
+        "text": ["The first text to analyze", "The second text to analyze"]
+      }
+
+    **Example Response**
+
+    .. code-block:: json
+
+      {
+        "responses": [
+          {
+            "text": "The first text to analyze",
+            "prediction": "Likely AI",
+            "ai_likelihood": 0.92
+          },
+          {
+            "text": "The second text to analyze",
+            "prediction": "Possibly AI",
+            "ai_likelihood": 0.58
+          }
+        ]
+      }
 
 **Errors**
 

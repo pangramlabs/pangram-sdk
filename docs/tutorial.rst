@@ -1,4 +1,4 @@
-checkfor.ai Quickstart Guide
+Checkfor.ai Quickstart Guide
 ===================================
 
 Usage
@@ -37,16 +37,20 @@ Make a request
     classifier = TextClassifier()
     result = classifier.predict(text)
     # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-    score = result['likelihood']
+    score = result['ai_likelihood']
 
-Make an async request
+Make a batch request
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
     from checkforai import TextClassifier
 
-    classifier = TextClassifier()
-    result = await classifier.predict_async(text)
+    text_batch = ["text1", "text2"]
 
+    classifier = TextClassifier()
+    results = classifier.batch_predict(text_batch)
+    for result in results:
+        text = result["text"]
+        score = result["ai_likelihood"]
 
