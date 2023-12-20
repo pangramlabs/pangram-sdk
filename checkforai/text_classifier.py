@@ -1,8 +1,10 @@
 import requests
 import os
-import aiohttp
+from typing import List
 
-API_URL = 'https://api.checkfor.ai/inference'
+
+API_ENDPOINT = 'https://api.checkfor.ai/v1/classify/text'
+BATCH_API_ENDPOINT = 'https://api.checkfor.ai/v1/classify/text/batch'
 
 
 class TextClassifier:
@@ -24,11 +26,11 @@ class TextClassifier:
             self.api_key = api_key
 
 
-    def predict(self, text: str):
+    def predict(self, text: str, logging: bool = True):
         """
-        Synchronously predict the classification of the given text.
+        Predict the classification of the given text.
 
-        Sends a POST request to the checkfor.ai API and returns the classification result.
+        Sends a POST request to the Checkfor.ai API and returns the classification result.
 
         :param text: The text to be classified.
         :type text: str
@@ -40,21 +42,24 @@ class TextClassifier:
             'x-api-key': self.api_key,
         }
         input_json = {
-            "input": text,
+            "text": text,
+            "source": "python",
+            "cid": self.api_key,
+            "logging": logging,
         }
-        response = requests.post(API_URL, json=input_json, headers=headers, timeout=10)
+        response = requests.post(API_ENDPOINT, json=input_json, headers=headers, timeout=30)
         return response.json()
 
 
-    async def predict_async(self, text: str):
+    def batch_predict(self, text_batch: List[str], logging: bool = True):
         """
-        Asynchronously predict the classification of the given text.
+        Predict the classification of the given text.
 
-        This function sends a POST request to the checkfor.ai API.
+        Sends a POST request to the Checkfor.ai API and returns the classification result.
 
-        :param text: The text to be classified.
-        :type text: str
-        :return: The classification result from the API as a JSON object.
+        :param text_batch: A list of strings to be classified.
+        :type text: List
+        :return: The classification result from the API.
         :rtype: dict
         """
         headers = {
@@ -62,12 +67,10 @@ class TextClassifier:
             'x-api-key': self.api_key,
         }
         input_json = {
-            "input": text,
+            "text": text_batch,
+            "source": "python_batch",
+            "cid": self.api_key,
+            "logging": logging,
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                API_URL,
-                headers=headers,
-                json=input_json,
-            ) as response:
-                return await response.json()
+        response = requests.post(BATCH_API_ENDPOINT, json=input_json, headers=headers, timeout=30)
+        return response.json()["responses"]
