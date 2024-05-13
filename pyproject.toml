@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "checkforai"
-version = "0.2.0"
+name = "pangram"
+version = "0.1.0"
 description = ""
-authors = ["Max Spero <mmspero@gmail.com>"]
+authors = ["Max Spero <max@pangramlabs.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

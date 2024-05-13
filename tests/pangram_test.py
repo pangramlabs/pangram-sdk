@@ -1,5 +1,5 @@
 import unittest
-from checkforai import TextClassifier
+from pangram import PangramText
 
 class TestPredict(unittest.TestCase):
     def test_predict(self):

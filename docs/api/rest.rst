@@ -1,9 +1,9 @@
 Inference API
 =============
 
-The Inference API allows you to submit text and receive a likelihood score. Use the batch inference API if classifying several texts, as it is more efficient and allows for higher throughput.
+The Inference API allows you to submit text and receive a likelihood score. Use the batch inference API if classifying several documents, as it is more efficient and allows for higher throughput.
 
-.. http:post:: https://api.checkfor.ai/v1/classify/text
+.. http:post:: https://text.api.pangramlabs.com
 
   :<json string text: The input text to classify.
   :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
@@ -31,8 +31,7 @@ The Inference API allows you to submit text and receive a likelihood score. Use 
 
   .. code-block:: http
 
-    POST https://api.checkfor.ai/v1/classify/text HTTP/1.1
-    Host: api.checkfor.ai
+    POST https://text.api.pangramlabs.com HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
@@ -50,7 +49,7 @@ The Inference API allows you to submit text and receive a likelihood score. Use 
       "ai_likelihood": 0.92
     }
 
-.. http:post:: https://api.checkfor.ai/v1/classify/text/batch
+.. http:post:: https://text-batch.api.pangramlabs.com
 
   :<json array texts: The input texts to classify.
   :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction".
@@ -78,8 +77,7 @@ The Inference API allows you to submit text and receive a likelihood score. Use 
 
     .. code-block:: http
 
-      POST https://api.checkfor.ai/v1/classify/text/batch HTTP/1.1
-      Host: api.checkfor.ai
+      POST https://text-batch.api.pangramlabs.com HTTP/1.1
       Content-Type: application/json
       x-api-key: your_api_key_here
 
