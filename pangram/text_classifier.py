@@ -46,8 +46,6 @@ class PangramText:
         input_json = {
             "text": text,
             "source": SOURCE_VERSION,
-            "cid": self.api_key,
-            "logging": logging,
         }
         response = requests.post(API_ENDPOINT, json=input_json, headers=headers, timeout=90)
         return response.json()
@@ -88,8 +86,6 @@ class PangramText:
         input_json = {
             "text": text_batch,
             "source": SOURCE_VERSION,
-            "cid": self.api_key,
-            "logging": logging,
         }
         response = requests.post(BATCH_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
         return response.json()["responses"]
