@@ -55,23 +55,6 @@ class PangramText:
         """
         Classify a batch of text as AI- or human-written.
 
-        Automatically batches the input, sends requests in batches, and yields the results as they return.
-
-        :param text_batch: A list of strings to be classified.
-        :type text_batch: List[str]
-        :return: A generator yielding classification results from the API for each text in the batch.
-        :rtype: Generator[dict, None, None]
-        """
-        for i in range(0, len(text_batch), self.max_batch_size):
-            batch = text_batch[i:i + self.max_batch_size]
-            results = self._individual_batch_prediction(batch)
-            for result in results:
-                yield result
-    
-    def _individual_batch_prediction(self, text_batch: List[str]):
-        """
-        Helper method to classify a batch of text as AI- or human-written.
-
         This method sends a batch of text to the Pangram Text API and returns the classification results.
 
         :param text_batch: A list of strings to be classified.
@@ -79,6 +62,8 @@ class PangramText:
         :return: A list of classification results from the API for each text in the batch.
         :rtype: List[dict]
         """
+        if len(text_batch) > self.max_batch_size:
+            raise ValueError(f"Maximum batch size is {self.max_batch_size}.")
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
