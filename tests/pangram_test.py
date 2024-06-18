@@ -1,10 +1,10 @@
 import unittest
-from checkforai import TextClassifier
+from pangram import PangramText
 
 class TestPredict(unittest.TestCase):
     def test_predict(self):
         text = "I recently had the pleasure of visiting OpenAI. As an AI language model, I cannot actually visit places."
-        classifier = TextClassifier()
+        classifier = PangramText()
         result = classifier.predict(text)
         self.assertEqual(result['text'], text)
         self.assertLess(result['ai_likelihood'], 1.0)
@@ -16,8 +16,8 @@ class TestBatchPredict(unittest.TestCase):
         text1 = "I recently had the pleasure of visiting OpenAI. As an AI language model, I cannot actually visit places."
         text2 = "i'm a human"
         text_batch = [text1, text2]
-        classifier = TextClassifier()
-        results = classifier.batch_predict(text_batch, logging=False)
+        classifier = PangramText()
+        results = classifier.batch_predict(text_batch)
         self.assertEqual(len(results), len(text_batch))
         self.assertEqual(results[0]["text"], text_batch[0])
         self.assertLess(results[0]["ai_likelihood"], 1)

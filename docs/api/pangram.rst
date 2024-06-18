@@ -1,10 +1,10 @@
 Python package
 ==================
 
-checkforai.text\_classifier module
+pangram.text\_classifier module
 ----------------------------------
 
-.. automodule:: checkforai.text_classifier
+.. automodule:: pangram.text_classifier
    :members:
    :undoc-members:
    :show-inheritance:

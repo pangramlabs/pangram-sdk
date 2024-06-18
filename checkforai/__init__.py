@@ -1,1 +1,0 @@
-from checkforai.text_classifier import TextClassifier
