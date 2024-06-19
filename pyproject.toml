@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pangram-sdk"
+name = "pangram"
 version = "0.1.1"
 description = ""
 authors = ["Max Spero <max@pangramlabs.com>"]
