@@ -112,6 +112,7 @@ jobs:
         name: python-package-distributions
         path: dist/
     - name: Publish distribution 📦 to TestPyPI
+      if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
