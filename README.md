@@ -1,4 +1,4 @@
-# Checkfor.ai Python
+# Pangram Labs Python Package
 
 ### Installation
 ```
