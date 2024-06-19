@@ -1,5 +1,5 @@
 """Defile all variables to be accessible from `import pangram`."""
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Max Spero"
 __email__ = "max@pangramlabs.com"
 __license__ = "MIT"
