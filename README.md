@@ -2,7 +2,7 @@
 
 ### Installation
 ```
-pip install pangram
+pip install pangram-sdk
 ```
 
 ### Add your API key

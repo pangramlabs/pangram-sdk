@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
-      url: https://pypi.org/p/pangram
+      url: https://pypi.org/p/pangram-sdk
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
@@ -100,7 +100,7 @@ jobs:
 
     environment:
       name: test
-      url: https://test.pypi.org/p/pangram
+      url: https://test.pypi.org/p/pangram-sdk
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
