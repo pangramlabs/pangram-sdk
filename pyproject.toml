@@ -1,9 +1,12 @@
 [tool.poetry]
-name = "pangram"
-version = "0.1.2"
+name = "pangram-sdk"
+version = "0.1.3"
 description = ""
 authors = ["Max Spero <max@pangramlabs.com>"]
 readme = "README.md"
+packages = [
+    { include = "pangram" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
