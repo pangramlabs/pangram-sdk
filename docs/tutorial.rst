@@ -9,7 +9,7 @@ Install `pangram`
 
 .. code-block:: bash
 
-    pip install pangram
+    pip install pangram-sdk
 
 Add your API key
 ~~~~~~~~~~~~~~~~
