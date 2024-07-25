@@ -2,7 +2,7 @@ import requests
 import os
 from typing import List
 
-SOURCE_VERSION = "python_sdk_0.1.0"
+SOURCE_VERSION = "python_sdk_0.1.4"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
@@ -48,7 +48,10 @@ class PangramText:
             "source": SOURCE_VERSION,
         }
         response = requests.post(API_ENDPOINT, json=input_json, headers=headers, timeout=90)
-        return response.json()
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
 
 
     def batch_predict(self, text_batch: List[str]):
@@ -73,4 +76,9 @@ class PangramText:
             "source": SOURCE_VERSION,
         }
         response = requests.post(BATCH_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
-        return response.json()["responses"]
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        if "responses" not in response_json:
+            raise ValueError(f"Failed to retrieve responses: {response_json}")
+        return response_json["responses"]
