@@ -6,14 +6,15 @@ pip install pangram-sdk
 ```
 
 ### Add your API key
-Either export it as a variable and import ai_classifier directly.
+Export it as a variable and import pangram directly:
 ```
 export PANGRAM_API_KEY=<your API key>
 ```
 ```
 from pangram import pangram
 ```
-Or pass an api key as an argument to the PangramText constructor.
+Or, if it's unavailable as an evironment variable, pass the api key directly as
+an argument to the PangramText constructor.
 ```
 from pangram import PangramText
 my_api_key = ''  # Fill this in with your API key.
