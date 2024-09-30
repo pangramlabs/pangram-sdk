@@ -22,8 +22,6 @@ class PangramText:
         """
         if api_key is None:
             self.api_key = os.getenv('PANGRAM_API_KEY')
-            if self.api_key is None:
-                raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument.")
         else:
             self.api_key = api_key
         self.max_batch_size = max_batch_size
@@ -40,6 +38,8 @@ class PangramText:
         :return: The classification result from the API.
         :rtype: dict
         """
+        if self.api_key is None:
+            raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
@@ -68,6 +68,8 @@ class PangramText:
         :return: A list of classification results from the API for each text in the batch.
         :rtype: List[dict]
         """
+        if self.api_key is None:
+            raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
         if len(text_batch) > self.max_batch_size:
             raise ValueError(f"Maximum batch size is {self.max_batch_size}.")
         headers = {
@@ -96,6 +98,8 @@ class PangramText:
         :return: The classification result from the API.
         :rtype: dict
         """
+        if self.api_key is None:
+            raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
