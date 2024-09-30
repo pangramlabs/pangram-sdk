@@ -2,6 +2,8 @@ import unittest
 from pangram import pangram
 from pangram import PangramText
 import os
+
+
 class TestPredict(unittest.TestCase):
     def test_predict(self):
         text = "I recently had the pleasure of visiting OpenAI. As an AI language model, I cannot actually visit places."
