@@ -5,8 +5,6 @@ __email__ = "max@pangramlabs.com"
 __license__ = "MIT"
 
 from pangram.text_classifier import PangramText
-pangram = PangramText()
+Pangram = PangramText
 
-__all__ = ["PangramText", "pangram"]
-
-
+__all__ = ["PangramText", "Pangram"]
