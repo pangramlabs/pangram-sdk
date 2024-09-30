@@ -9,7 +9,7 @@ BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 MAX_BATCH_SIZE = 32
 
-class AIClassifier:
+class PangramText:
     def __init__(self, api_key: str = None, max_batch_size = MAX_BATCH_SIZE) -> None:
         """
         A classifier for text inputs using the Pangram Labs API.

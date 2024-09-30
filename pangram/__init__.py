@@ -4,9 +4,9 @@ __author__ = "Max Spero"
 __email__ = "max@pangramlabs.com"
 __license__ = "MIT"
 
-from pangram.text_classifier import AIClassifier
-ai_classifier = AIClassifier()
+from pangram.text_classifier import PangramText
+pangram = PangramText()
 
-__all__ = ["AIClassifier", "ai_classifier"]
+__all__ = ["PangramText", "pangram"]
 
 
