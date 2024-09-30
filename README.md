@@ -18,7 +18,7 @@ an argument to the PangramText constructor.
 ```
 from pangram import PangramText
 my_api_key = ''  # Fill this in with your API key.
-ai_classifier = PangramText(api_key=my_api_key)
+pangram_client = PangramText(api_key=my_api_key)
 ```
 
 ### Make a request
