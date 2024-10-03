@@ -1,5 +1,5 @@
 import unittest
-from pangram import PangramText
+from pangram import Pangram, PangramText
 import os
 
 
