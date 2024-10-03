@@ -23,6 +23,7 @@ Either export it as an environment variable:
 Or pass it directly to the constructor:
 
 .. code:: python
+
     from pangram import Pangram
 
     my_api_key = ''  # Fill this in with your API key.
