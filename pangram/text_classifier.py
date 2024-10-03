@@ -2,10 +2,11 @@ import requests
 import os
 from typing import List
 
-SOURCE_VERSION = "python_sdk_0.1.4"
+SOURCE_VERSION = "python_sdk_0.1.5"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
+SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
@@ -21,11 +22,11 @@ class PangramText:
         """
         if api_key is None:
             self.api_key = os.getenv('PANGRAM_API_KEY')
-            if self.api_key is None:
-                raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument.")
         else:
             self.api_key = api_key
         self.max_batch_size = max_batch_size
+        if self.api_key is None:
+            raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
 
 
     def predict(self, text: str):
@@ -48,6 +49,8 @@ class PangramText:
             "source": SOURCE_VERSION,
         }
         response = requests.post(API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         response_json = response.json()
         if "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
@@ -76,9 +79,35 @@ class PangramText:
             "source": SOURCE_VERSION,
         }
         response = requests.post(BATCH_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         response_json = response.json()
         if "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         if "responses" not in response_json:
             raise ValueError(f"Failed to retrieve responses: {response_json}")
         return response_json["responses"]
+
+    def predict_sliding_window(self, text: str):
+        """
+        Classify a long document using a sliding window to iterate across the full document.
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API.
+        :rtype: dict
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+        response = requests.post(SLIDING_WINDOW_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json

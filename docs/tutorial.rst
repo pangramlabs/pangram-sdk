@@ -23,19 +23,20 @@ Either export it as an environment variable:
 Or pass it directly to the constructor:
 
 .. code:: python
+    from pangram import Pangram
 
     my_api_key = ''  # Fill this in with your API key.
-    classifier = PangramText(api_key=my_api_key)
+    pangram_client = Pangram(api_key=my_api_key)
 
 Make a request
 ~~~~~~~~~~~~~~
 
 .. code:: python
 
-    from pangram import PangramText
+    from pangram import Pangram
 
-    classifier = PangramText()
-    result = classifier.predict(text)
+    pangram_client = Pangram()
+    result = pangram_client.predict(text)
     # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
     score = result['ai_likelihood']
 
@@ -44,12 +45,12 @@ Make a batch request
 
 .. code:: python
 
-    from pangram import PangramText
+    from pangram import Pangram
 
     text_batch = ["text1", "text2"]
 
-    classifier = PangramText()
-    results = classifier.batch_predict(text_batch)
+    pangram_client = Pangram()
+    results = pangram_client.batch_predict(text_batch)
     for result in results:
         text = result["text"]
         score = result["ai_likelihood"]
