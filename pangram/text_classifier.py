@@ -2,7 +2,7 @@ import requests
 import os
 from typing import List
 
-SOURCE_VERSION = "python_sdk_0.1.5"
+SOURCE_VERSION = "python_sdk_0.1.6"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
