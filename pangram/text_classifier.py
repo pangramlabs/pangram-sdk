@@ -1,12 +1,13 @@
 import requests
 import os
-from typing import List
+from typing import List, Dict, Optional
 
 SOURCE_VERSION = "python_sdk_0.1.6"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
+PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
@@ -105,6 +106,38 @@ class PangramText:
             "source": SOURCE_VERSION,
         }
         response = requests.post(SLIDING_WINDOW_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
+
+    def check_plagiarism(self, text: str) -> Dict:
+        """
+        Check text for potential plagiarism by comparing it against a vast database of online content.
+
+        :param text: The text to check for plagiarism.
+        :type text: str
+        :return: A dictionary containing the plagiarism check results, including:
+                - plagiarism_detected (bool): Whether plagiarism was detected
+                - plagiarized_content (List): List of detected plagiarized content with sources
+                - total_sentences (int): Total number of sentences checked
+                - plagiarized_sentences (List): List of sentences detected as plagiarized
+                - percent_plagiarized (float): Percentage of text detected as plagiarized
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or if the response is invalid
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+
+        response = requests.post(PLAGIARISM_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
         if response.status_code != 200:
             raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         response_json = response.json()

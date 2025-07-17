@@ -183,6 +183,69 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ]
     }
 
+Plagiarism Detection API
+======================
+
+The Plagiarism Detection API allows you to check text for potential plagiarism by comparing it against a vast database of online content.
+
+.. http:post:: https://plagiarism.api.pangram.com
+
+  :<json string text: The input text to check for plagiarism.
+  :>json string text: The input text that was checked.
+  :>json bool plagiarism_detected: Whether plagiarism was detected in the text.
+  :>json array plagiarized_content: A list of detected plagiarized content, including source URLs and matched text.
+  :>json int total_sentences: Total number of sentences in the input text.
+  :>json array plagiarized_sentences: List of sentences that were detected as plagiarized.
+  :>json float percent_plagiarized: Percentage of the text that was detected as plagiarized.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://plagiarism.api.pangram.com HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to check for plagiarism"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to check for plagiarism",
+      "plagiarism_detected": true,
+      "plagiarized_content": [
+        {
+          "source_url": "https://example.com/source",
+          "matched_text": "The text to check",
+          "similarity_score": 0.95
+        }
+      ],
+      "total_sentences": 1,
+      "plagiarized_sentences": [0],
+      "percent_plagiarized": 100.0
+    }
+
 **Errors**
 
 The API may return the following error codes:
