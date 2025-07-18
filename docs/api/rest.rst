@@ -237,12 +237,12 @@ The Plagiarism Detection API allows you to check text for potential plagiarism b
       "plagiarized_content": [
         {
           "source_url": "https://example.com/source",
-          "matched_text": "The text to check",
+          "matched_text": "The text to check for plagiarism",
           "similarity_score": 0.95
         }
       ],
       "total_sentences": 1,
-      "plagiarized_sentences": [0],
+      "plagiarized_sentences": 1,
       "percent_plagiarized": 100.0
     }
 
