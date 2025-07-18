@@ -62,3 +62,30 @@ Batch inference has significantly higher throughput, but can incur some startup 
 multiple batch requests are sent at once. Use the single inference endpoint if latency is a strong requirement.
 Use the batch inference endpoint if operating on multiple inputs at once.
 
+Check for Plagiarism
+~~~~~~~~~~~~~~~~~~~
+
+The plagiarism detection API helps you identify potential plagiarism by comparing text against a vast database of online content:
+
+.. code:: python
+
+    from pangram import Pangram
+
+    pangram_client = Pangram()
+    
+    text = "Text to check for plagiarism"
+    result = pangram_client.check_plagiarism(text)
+    
+    if result['plagiarism_detected']:
+        print(f"Plagiarism detected! {result['percent_plagiarized']}% of the text may be plagiarized.")
+        for content in result['plagiarized_content']:
+            print(f"Found match at {content['source_url']}")
+            print(f"Matched text: {content['matched_text']}")
+
+The plagiarism detection response includes:
+- Whether plagiarism was detected
+- List of plagiarized content with source URLs
+- Total number of sentences checked
+- List of plagiarized sentences
+- Percentage of text that was plagiarized
+
