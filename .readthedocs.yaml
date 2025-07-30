@@ -1,5 +1,5 @@
 # Readthedocs version
-version: 3
+version: 2
 
 # Set the version of Python
 build:
@@ -20,5 +20,3 @@ python:
 sphinx:
    configuration: docs/conf.py
    fail_on_warning: true
-
-
