@@ -177,11 +177,78 @@ The Inference API allows you to submit text and receive an AI likelihood score.
         },
         {
           "text": "long text.",
-          "ai_likelihood": 0.1,
+          "ai_likelihood": 0.2,
           "prediction": "Unlikely AI"
         }
       ]
     }
+
+.. http:post:: https://dashboard-text.api.pangramlabs.com
+
+  :<json string text: The input text to classify.
+  :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+  :>json string prediction: A string representing the classification.
+  :>json string dashboard_link: A link to the dashboard page containing the full classification result.
+  :>json float fraction_ai_content: The fraction of windows that are classified as AI.
+  :>json float max_ai_likelihood: The maximum AI likelihood score among all windows.
+  :>json float avg_ai_likelihood: The average AI likelihood score among all windows.
+  :>json array windows: A list of windows and their individual classifications. Each object in the array is the response from a single text prediction.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text.api.pangramlabs.com HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "Extremely long text."
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "Extremely long text.",
+      "prediction": "Highly likely AI",
+      "ai_likelihood": 1.0,
+      "dashboard_link": "https://www.pangram.com/history/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "max_ai_likelihood": 1.0,
+      "avg_ai_likelihood": 0.6,
+      "fraction_ai_content": 0.5,
+      "windows": [
+        {
+          "text": "Extremely long",
+          "ai_likelihood": 1.0,
+          "prediction": "Highly likely AI"
+        },
+        {
+          "text": "long text.",
+          "ai_likelihood": 0.2,
+          "prediction": "Unlikely AI"
+        }
+      ]
+    }
+
 
 Plagiarism Detection API
 ======================

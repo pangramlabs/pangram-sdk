@@ -8,14 +8,13 @@ API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
+DASHBOARD_API_ENDPOINT = 'https://dashboard-text.api.pangramlabs.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
     def __init__(self, api_key: str = None, max_batch_size = MAX_BATCH_SIZE) -> None:
         """
         A classifier for text inputs using the Pangram Labs API.
-
-        This class provides synchronous and asynchronous methods to classify text by making API requests.
 
         :param api_key: Your API key for the Pangram Labs. If not provided, the environment variable PANGRAM_API_KEY will be used.
         :type api_key: str, optional
@@ -89,6 +88,7 @@ class PangramText:
             raise ValueError(f"Failed to retrieve responses: {response_json}")
         return response_json["responses"]
 
+
     def predict_sliding_window(self, text: str):
         """
         Classify a long document using a sliding window to iterate across the full document.
@@ -112,6 +112,36 @@ class PangramText:
         if "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
+
+
+    def predict_with_dashboard_link(self, text: str):
+        """
+        Classify text as AI- or human-written.
+
+        Sends a request to the Pangram Text API and returns the classification result, along with a
+        link to a dashboard page containing the classification result.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API.
+        :rtype: dict
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+        response = requests.post(DASHBOARD_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
+
 
     def check_plagiarism(self, text: str) -> Dict:
         """
