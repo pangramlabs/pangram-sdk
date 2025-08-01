@@ -15,7 +15,6 @@ author = 'Max Spero, Bradley Emi'
 
 extensions = [
     'sphinx.ext.autodoc',  # Add other extensions as needed.
-    'sphinx.ext.napoleon',  # Support for Google/NumPy style docstrings
     'sphinxcontrib.httpdomain',
 ]
 
