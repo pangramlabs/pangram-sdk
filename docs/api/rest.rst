@@ -7,13 +7,13 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   Use the batch endpoint to maximize throughput when classifying multiple documents.
 
 .. note::
-  ``text.api.pangramlabs.com`` and ``text-batch.api.pangramlabs.com`` only use
+  ``text.api.pangram.com`` and ``text-batch.api.pangram.com`` only use
   the first ~400 words of the input text when making its prediction.
 
   For accurate predictions on longer text with mixed human and AI content,
   break your document into chunks of ~400 words or use the sliding window API.
 
-.. http:post:: https://text.api.pangramlabs.com
+.. http:post:: https://text.api.pangram.com
 
   :<json string text: The input text to classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
@@ -43,7 +43,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
   .. code-block:: http
 
-    POST https://text.api.pangramlabs.com HTTP/1.1
+    POST https://text.api.pangram.com HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
@@ -61,7 +61,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       "ai_likelihood": 0.92
     }
 
-.. http:post:: https://text-batch.api.pangramlabs.com
+.. http:post:: https://text-batch.api.pangram.com
 
   :<json array text: An array of input texts to classify.
   :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction". Each item in the array is the same as a response from a single text prediction.
@@ -89,7 +89,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
     .. code-block:: http
 
-      POST https://text-batch.api.pangramlabs.com HTTP/1.1
+      POST https://text-batch.api.pangram.com HTTP/1.1
       Content-Type: application/json
       x-api-key: your_api_key_here
 
@@ -116,7 +116,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
         ]
       }
 
-.. http:post:: https://text-sliding.api.pangramlabs.com
+.. http:post:: https://text-sliding.api.pangram.com
 
   :<json string text: The input text to segment into windows and classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
@@ -125,6 +125,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json float max_ai_likelihood: The maximum AI likelihood score among all windows.
   :>json float avg_ai_likelihood: The average AI likelihood score among all windows.
   :>json string prediction: A string representing the classification.
+  :>json string short_prediction: A short string representing the classification ("AI", "Human", "Mixed").
   :>json float fraction_ai_content: The fraction of windows that are classified as AI.
   :>json array windows: A list of windows and their individual classifications. Each object in the array is the response from a single text prediction.
   :>json list ai_sentences: If return_ai_sentences was True, then a list of the most indicative AI sentences.
@@ -150,7 +151,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
   .. code-block:: http
 
-    POST https://text.api.pangramlabs.com HTTP/1.1
+    POST https://text.api.pangram.com HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
@@ -183,11 +184,12 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ]
     }
 
-.. http:post:: https://dashboard-text.api.pangramlabs.com
+.. http:post:: https://dashboard-text.api.pangram.com
 
   :<json string text: The input text to classify.
   :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
   :>json string prediction: A string representing the classification.
+  :>json string short_prediction: A short string representing the classification ("AI", "Human", "Mixed").
   :>json string dashboard_link: A link to the dashboard page containing the full classification result.
   :>json float fraction_ai_content: The fraction of windows that are classified as AI.
   :>json float max_ai_likelihood: The maximum AI likelihood score among all windows.
@@ -215,7 +217,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
   .. code-block:: http
 
-    POST https://text.api.pangramlabs.com HTTP/1.1
+    POST https://text.api.pangram.com HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
