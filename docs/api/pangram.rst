@@ -8,5 +8,3 @@ pangram.text\_classifier module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
