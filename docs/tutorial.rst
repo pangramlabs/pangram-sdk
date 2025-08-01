@@ -63,7 +63,7 @@ multiple batch requests are sent at once. Use the single inference endpoint if l
 Use the batch inference endpoint if operating on multiple inputs at once.
 
 Check for Plagiarism
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 The plagiarism detection API helps you identify potential plagiarism by comparing text against a vast database of online content:
 
@@ -72,10 +72,10 @@ The plagiarism detection API helps you identify potential plagiarism by comparin
     from pangram import Pangram
 
     pangram_client = Pangram()
-    
+
     text = "Text to check for plagiarism"
     result = pangram_client.check_plagiarism(text)
-    
+
     if result['plagiarism_detected']:
         print(f"Plagiarism detected! {result['percent_plagiarized']}% of the text may be plagiarized.")
         for content in result['plagiarized_content']:
@@ -88,4 +88,3 @@ The plagiarism detection response includes:
 - Total number of sentences checked
 - List of plagiarized sentences
 - Percentage of text that was plagiarized
-

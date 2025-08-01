@@ -92,6 +92,7 @@ class PangramText:
     def predict_sliding_window(self, text: str):
         """
         Classify a long document using a sliding window to iterate across the full document.
+
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API.

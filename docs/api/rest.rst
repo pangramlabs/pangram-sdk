@@ -251,7 +251,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
 
 Plagiarism Detection API
-======================
+========================
 
 The Plagiarism Detection API allows you to check text for potential plagiarism by comparing it against a vast database of online content.
 
