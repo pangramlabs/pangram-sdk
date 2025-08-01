@@ -37,7 +37,11 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
-        :return: The classification result from the API.
+        :return: The classification result from the API, as a dict with the following fields:
+
+                - text (str): The input text.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - prediction (str): A string representing the classification.
         :rtype: dict
         """
         headers = {
@@ -65,7 +69,11 @@ class PangramText:
 
         :param text_batch: A list of strings to be classified.
         :type text_batch: List[str]
-        :return: A list of classification results from the API for each text in the batch.
+        :return: A list of classification results from the API for each text in the batch, as a list of dicts with the following fields:
+
+                - text (str): The input text.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - prediction (str): A string representing the classification.
         :rtype: List[dict]
         """
         if len(text_batch) > self.max_batch_size:
@@ -95,7 +103,16 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
-        :return: The classification result from the API.
+        :return: The classification result from the API, as a dict with the following fields:
+
+                - text (string): The classified text.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - max_ai_likelihood (float): The maximum AI likelihood score among all windows.
+                - avg_ai_likelihood (float): The average AI likelihood score among all windows.
+                - prediction (string): A string representing the classification.
+                - short_prediction (string): A short string representing the classification ("AI", "Human", "Mixed").
+                - fraction_ai_content (float): The fraction of windows that are classified as AI.
+                - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
         headers = {
@@ -124,7 +141,17 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
-        :return: The classification result from the API.
+        :return: The classification result from the API, as a dict with the following fields:
+
+                - text (string): The classified text.
+                - dashboard_link (string): A link to a dashboard page containing the classification result.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - max_ai_likelihood (float): The maximum AI likelihood score among all windows.
+                - avg_ai_likelihood (float): The average AI likelihood score among all windows.
+                - prediction (string): A string representing the classification.
+                - short_prediction (string): A short string representing the classification ("AI", "Human", "Mixed").
+                - fraction_ai_content (float): The fraction of windows that are classified as AI.
+                - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
         headers = {
@@ -151,6 +178,8 @@ class PangramText:
         :param text: The text to check for plagiarism.
         :type text: str
         :return: A dictionary containing the plagiarism check results, including:
+
+                - text (str): The input text.
                 - plagiarism_detected (bool): Whether plagiarism was detected
                 - plagiarized_content (List): List of detected plagiarized content with sources
                 - total_sentences (int): Total number of sentences checked
