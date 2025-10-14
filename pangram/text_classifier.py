@@ -211,8 +211,7 @@ class PangramText:
         """
         Classify text as AI- or human-written with extended analysis.
 
-        Sends a request to the Pangram Text Extended API and returns comprehensive classification results
-        including window analysis, likelihood scores, and metadata.
+        Sends a request to the Pangram Text Extended API and returns precise, windowed results using adaptive boundaries 
 
         :param text: The text to be classified.
         :type text: str
