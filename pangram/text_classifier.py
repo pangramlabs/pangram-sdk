@@ -2,13 +2,14 @@ import requests
 import os
 from typing import List, Dict, Optional
 
-SOURCE_VERSION = "python_sdk_0.1.6"
+SOURCE_VERSION = "python_sdk_0.1.7"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 DASHBOARD_API_ENDPOINT = 'https://dashboard-text.api.pangramlabs.com'
+TEXT_EXTENDED_API_ENDPOINT = 'https://text-extended.pangram.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
@@ -198,6 +199,52 @@ class PangramText:
         }
 
         response = requests.post(PLAGIARISM_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
+
+
+    def predict_extended(self, text: str) -> Dict:
+        """
+        Classify text as AI- or human-written with extended analysis.
+
+        Sends a request to the Pangram Text Extended API and returns comprehensive classification results
+        including window analysis, likelihood scores, and metadata.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The extended classification result from the API, as a dict with the following fields:
+
+                - text (str): The input text.
+                - avg_ai_likelihood (float): Weighted average AI likelihood score.
+                - max_ai_likelihood (float): Maximum AI likelihood score among all windows.
+                - prediction (str): Long-form prediction string.
+                - prediction_short (str): Short-form prediction string.
+                - headline (str): Classification headline.
+                - windows (list): List of text windows and their classifications.
+                - window_likelihoods (list): AI likelihood scores for each window.
+                - window_indices (list): Indices for each window.
+                - percent_human (float): Percentage classified as human-written.
+                - percent_ai (float): Percentage classified as AI-written.
+                - percent_mixed (float): Percentage classified as mixed.
+                - metadata (dict): Additional metadata about the analysis.
+                - version (str): Analysis version identifier.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or if the response is invalid
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+
+        response = requests.post(TEXT_EXTENDED_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
         if response.status_code != 200:
             raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         response_json = response.json()

@@ -251,6 +251,85 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ]
     }
 
+.. http:post:: https://text-extended.pangram.com
+
+  :<json string text: The input text to classify with extended analysis.
+  :>json string text: The input text that was analyzed.
+  :>json float avg_ai_likelihood: Weighted average AI likelihood score across all windows.
+  :>json float max_ai_likelihood: Maximum AI likelihood score among all windows.
+  :>json string prediction: Long-form prediction string representing the classification.
+  :>json string prediction_short: Short-form prediction string ("AI", "Human", "Mixed").
+  :>json string headline: Classification headline summarizing the result.
+  :>json array windows: List of text windows and their individual classifications.
+  :>json array window_likelihoods: AI likelihood scores for each window.
+  :>json array window_indices: Indices indicating the position of each window in the original text.
+  :>json float percent_human: Percentage of text classified as human-written.
+  :>json float percent_ai: Percentage of text classified as AI-written.
+  :>json float percent_mixed: Percentage of text classified as mixed content.
+  :>json object metadata: Additional metadata about the analysis.
+  :>json string version: Analysis version identifier ("adaptive_boundaries").
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text-extended.pangram.com HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze with extended classification"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze with extended classification",
+      "avg_ai_likelihood": 0.75,
+      "max_ai_likelihood": 0.92,
+      "prediction": "Likely AI-generated content",
+      "prediction_short": "AI",
+      "headline": "High AI Confidence",
+      "windows": [
+        {
+          "text": "The text to analyze",
+          "ai_likelihood": 0.85,
+          "prediction": "Likely AI"
+        },
+        {
+          "text": "with extended classification",
+          "ai_likelihood": 0.65,
+          "prediction": "Possibly AI"
+        }
+      ],
+      "window_likelihoods": [0.85, 0.65],
+      "window_indices": [0, 20],
+      "percent_human": 25.0,
+      "percent_ai": 70.0,
+      "percent_mixed": 5.0,
+      "metadata": {},
+      "version": "adaptive_boundaries"
+    }
+
 
 Plagiarism Detection API
 ========================
