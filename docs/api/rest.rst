@@ -306,30 +306,39 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       "text": "The text to analyze with extended classification",
       "avg_ai_likelihood": 0.75,
       "max_ai_likelihood": 0.92,
-      "prediction": "Likely AI-generated content",
+      "prediction": "Primarily AI-generated, or heavily AI-assisted",
       "prediction_short": "AI",
-      "headline": "High AI Confidence",
+      "headline": "AI Detected",
       "windows": [
         {
           "text": "The text to analyze",
           "ai_likelihood": 0.85,
-          "prediction": "Likely AI"
+          "label": "AI",
+          "confidence": "Medium",
+          "start_index": 0,
+          "end_index": 19,
+          "word_count": 4
         },
         {
           "text": "with extended classification",
           "ai_likelihood": 0.65,
-          "prediction": "Possibly AI"
+          "label": "AI",
+          "confidence": "Low",
+          "start_index": 20,
+          "end_index": 47,
+          "word_count": 3
         }
       ],
       "window_likelihoods": [0.85, 0.65],
-      "window_indices": [0, 20],
+      "window_indices": [[0, 19], [20, 47]],
       "percent_human": 25.0,
       "percent_ai": 70.0,
       "percent_mixed": 5.0,
-      "metadata": {},
+      "metadata": {
+        "request_id": "123e4567-e89b-12d3-a456-426614174000"
+      },
       "version": "adaptive_boundaries"
     }
-
 
 Plagiarism Detection API
 ========================
