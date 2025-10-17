@@ -32,7 +32,10 @@ Or pass it directly to the constructor:
 Make a request
 ~~~~~~~~~~~~~~
 
-Basic prediction (this cuts off text at 512 tokens):
+Basic prediction
+~~~~~~~~~~~~~~~~~
+Single Pangram model prediction, cuts off text at 512 tokens
+
 .. code:: python
 
     from pangram import Pangram
@@ -42,7 +45,10 @@ Basic prediction (this cuts off text at 512 tokens):
     # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
     score = result['ai_likelihood']
 
-Extended prediction (this returns windowed results for long texts):
+Extended prediction 
+~~~~~~~~~~~~~~~~~~~~
+Returns windowed results for long texts
+
 .. code:: python
 
     from pangram import Pangram
@@ -54,7 +60,11 @@ Extended prediction (this returns windowed results for long texts):
     max_score = result['max_ai_likelihood']
     percent_ai = result['percent_ai']
 
-Legacy predict method (calls predict_short internally):
+Legacy predict method:
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Calls predict_short internally
+
 .. code:: python
 
     from pangram import Pangram
@@ -80,7 +90,7 @@ Make a batch request
         score = result["ai_likelihood"]
 
 Batch Inference
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 Batch inference has significantly higher throughput, but can incur some startup latency especially if
 multiple batch requests are sent at once. Use the single inference endpoint if latency is a strong requirement.
 Use the batch inference endpoint if operating on multiple inputs at once.
@@ -105,7 +115,8 @@ The plagiarism detection API helps you identify potential plagiarism by comparin
             print(f"Found match at {content['source_url']}")
             print(f"Matched text: {content['matched_text']}")
 
-The plagiarism detection response includes:
+The plagiarism detection response includes
+
 - Whether plagiarism was detected
 - List of plagiarized content with source URLs
 - Total number of sentences checked
