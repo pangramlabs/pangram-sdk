@@ -31,4 +31,13 @@ jobs:
 
       - name: Build Sphinx documentation
         working-directory: docs
-        run: sphinx-build -T -W --keep-going -b html -d _build/doctrees -D language=en . _build/html
+        run: |
+          set -o pipefail
+          mkdir -p _build
+          sphinx-build -T -W --keep-going -b html -d _build/doctrees -D language=en -w _build/sphinx-warnings.log . _build/html || status=$?
+          if [ -s _build/sphinx-warnings.log ]; then
+            echo "::group::Sphinx warnings"
+            cat _build/sphinx-warnings.log
+            echo "::endgroup::"
+          fi
+          exit ${status:-0}
