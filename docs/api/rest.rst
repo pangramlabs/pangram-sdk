@@ -263,8 +263,8 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json string prediction_short: Short-form prediction string ("AI", "Human", "Mixed").
   :>json string headline: Classification headline summarizing the result.
   :>json array windows: List of text segments (windows) analyzed individually. Each window contains text, ai_likelihood, label (str), confidence (str), start_index, end_index, and word_count.
-  :>json array window_likelihoods: AI likelihood scores for each window.
-  :>json array window_indices: Indices indicating the position of each window in the original text.
+  :>json array window_likelihoods: AI likelihood scores for each window (list of values from 0.0 to 1.0)
+  :>json array window_indices: Indices indicating the position of each window in the original text (list of tuples (start_char_index, end_char_index))
   :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
   :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
   :>json float fraction_mixed: Fraction of text classified as mixed content (0.0-1.0).
