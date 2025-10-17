@@ -254,6 +254,8 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://text-extended.pangram.com
 
   :<json string text: The input text to classify with extended analysis.
+  :<json boolean dashboard: Optional flag to enable dashboard integration (default: false).
+  :<json boolean is_public: Optional flag to control visibility in dashboard (default: true).
   :>json string text: The input text that was analyzed.
   :>json float avg_ai_likelihood: Weighted average AI likelihood score across all windows.
   :>json float max_ai_likelihood: Maximum AI likelihood score among all windows.
@@ -263,11 +265,12 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json array windows: List of text windows and their individual classifications.
   :>json array window_likelihoods: AI likelihood scores for each window.
   :>json array window_indices: Indices indicating the position of each window in the original text.
-  :>json float percent_human: Percentage of text classified as human-written.
-  :>json float percent_ai: Percentage of text classified as AI-written.
-  :>json float percent_mixed: Percentage of text classified as mixed content.
+  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
+  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
+  :>json float fraction_mixed: Fraction of text classified as mixed content (0.0-1.0).
   :>json object metadata: Additional metadata about the analysis.
   :>json string version: Analysis version identifier ("adaptive_boundaries").
+  :>json string dashboard_link: Optional dashboard link (only present when dashboard=true). is_public controls visibility of dashboard link, to only your account or all users. 
 
   **Request Headers**
 
@@ -283,7 +286,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   .. code-block:: json
 
     {
-      "text": "<text>"
+      "text": "<text>",
+      "dashboard": false,
+      "is_public": true
     }
 
   **Example Request**
@@ -295,7 +300,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
     x-api-key: your_api_key_here
 
     {
-      "text": "The text to analyze with extended classification"
+      "text": "The text to analyze with extended classification",
+      "dashboard": true,
+      "is_public": true
     }
 
   **Example Response**
@@ -331,15 +338,15 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ],
       "window_likelihoods": [0.85, 0.65],
       "window_indices": [[0, 19], [20, 47]],
-      "percent_human": 25.0,
-      "percent_ai": 70.0,
-      "percent_mixed": 5.0,
+      "fraction_human": 0.25,
+      "fraction_ai": 0.70,
+      "fraction_mixed": 0.05,
       "metadata": {
         "request_id": "123e4567-e89b-12d3-a456-426614174000"
       },
-      "version": "adaptive_boundaries"
+      "version": "adaptive_boundaries",
+      "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
     }
-
 Plagiarism Detection API
 ========================
 

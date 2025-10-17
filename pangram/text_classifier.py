@@ -9,7 +9,7 @@ BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 DASHBOARD_API_ENDPOINT = 'https://dashboard-text.api.pangramlabs.com'
-TEXT_EXTENDED_API_ENDPOINT = 'https://text-extended.pangram.com'
+TEXT_EXTENDED_API_ENDPOINT = 'https://text-extended.api.pangramlabs.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
@@ -30,9 +30,9 @@ class PangramText:
             raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
 
 
-    def predict(self, text: str):
+    def predict_short(self, text: str):
         """
-        Classify text as AI- or human-written.
+        Classify text as AI- or human-written using the short endpoint.
 
         Sends a request to the Pangram Text API and returns the classification result.
 
@@ -60,6 +60,24 @@ class PangramText:
         if "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
+
+
+    def predict(self, text: str):
+        """
+        Classify text as AI- or human-written.
+
+        This method calls predict_short internally for backward compatibility.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API, as a dict with the following fields:
+
+                - text (str): The input text.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - prediction (str): A string representing the classification.
+        :rtype: dict
+        """
+        return self.predict_short(text)
 
 
     def batch_predict(self, text_batch: List[str]):
