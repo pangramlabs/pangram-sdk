@@ -1,5 +1,6 @@
 import requests
 import os
+import warnings
 from typing import List, Dict, Optional
 
 SOURCE_VERSION = "python_sdk_0.1.8"
@@ -120,6 +121,9 @@ class PangramText:
         """
         Classify a long document using a sliding window to iterate across the full document.
 
+        .. deprecated:: 0.1.8
+           This method is deprecated. Use :meth:`predict_extended` instead for better performance. This method will be removed by April 1st, 2026. 
+
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API, as a dict with the following fields:
@@ -134,6 +138,11 @@ class PangramText:
                 - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
+        warnings.warn(
+            "predict_sliding_window() is deprecated. Use predict_extended() instead for better performance. This method will be removed by April 1st, 2026.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
@@ -158,6 +167,9 @@ class PangramText:
         Sends a request to the Pangram Text API and returns the classification result, along with a
         link to a dashboard page containing the classification result.
 
+        .. deprecated:: 0.1.8
+           This method is deprecated. Use predict_extended with the dashboard flag instead. This method will be removed by April 1st, 2026.
+
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API, as a dict with the following fields:
@@ -173,6 +185,11 @@ class PangramText:
                 - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
+        warnings.warn(
+            "predict_with_dashboard_link() is deprecated. Use predict_extended with the dashboard flag instead. This method will be removed by April 1st, 2026.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,

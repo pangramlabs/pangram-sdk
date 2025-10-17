@@ -68,4 +68,11 @@ for result in results:
     score = result['ai_likelihood']
 ```
 
+### Deprecated Methods
+
+The following methods are deprecated and will be removed by April 1st, 2026:
+
+- `predict_sliding_window()` - Use `predict_extended()` instead for better performance
+- `predict_with_dashboard_link()` - Use `predict_extended` with the dashboard flag instead
+
 Questions? Email [support@pangram.com](mailto:support@pangram.com)!

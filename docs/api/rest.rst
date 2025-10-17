@@ -118,6 +118,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
 .. http:post:: https://text-sliding.api.pangram.com
 
+  .. warning::
+     This endpoint is deprecated. Use the text-extended endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
+
   :<json string text: The input text to segment into windows and classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
   :>json string text: The classified text.
@@ -185,6 +188,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
     }
 
 .. http:post:: https://dashboard-text.api.pangram.com
+
+  .. warning::
+     This endpoint is deprecated. Use the text-extended endpoint with the dashboard flag instead. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify.
   :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
