@@ -32,6 +32,29 @@ Or pass it directly to the constructor:
 Make a request
 ~~~~~~~~~~~~~~
 
+Basic prediction (this cuts off text at 512 tokens):
+.. code:: python
+
+    from pangram import Pangram
+
+    pangram_client = Pangram()
+    result = pangram_client.predict_short(text)
+    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
+    score = result['ai_likelihood']
+
+Extended prediction (this returns windowed results for long texts):
+.. code:: python
+
+    from pangram import Pangram
+
+    pangram_client = Pangram()
+    result = pangram_client.predict_extended(text)
+    # Extended analysis with windowed results and detailed metrics
+    avg_score = result['avg_ai_likelihood']
+    max_score = result['max_ai_likelihood']
+    percent_ai = result['percent_ai']
+
+Legacy predict method (calls predict_short internally):
 .. code:: python
 
     from pangram import Pangram

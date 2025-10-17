@@ -1,14 +1,16 @@
 import requests
 import os
+import warnings
 from typing import List, Dict, Optional
 
-SOURCE_VERSION = "python_sdk_0.1.6"
+SOURCE_VERSION = "python_sdk_0.1.8"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 DASHBOARD_API_ENDPOINT = 'https://dashboard-text.api.pangramlabs.com'
+TEXT_EXTENDED_API_ENDPOINT = 'https://text-extended.api.pangramlabs.com'
 MAX_BATCH_SIZE = 32
 
 class PangramText:
@@ -29,9 +31,9 @@ class PangramText:
             raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
 
 
-    def predict(self, text: str):
+    def predict_short(self, text: str):
         """
-        Classify text as AI- or human-written.
+        Classify text as AI- or human-written using the short endpoint.
 
         Sends a request to the Pangram Text API and returns the classification result.
 
@@ -59,6 +61,24 @@ class PangramText:
         if "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
+
+
+    def predict(self, text: str):
+        """
+        Classify text as AI- or human-written.
+
+        This method calls predict_short internally for backward compatibility.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The classification result from the API, as a dict with the following fields:
+
+                - text (str): The input text.
+                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+                - prediction (str): A string representing the classification.
+        :rtype: dict
+        """
+        return self.predict_short(text)
 
 
     def batch_predict(self, text_batch: List[str]):
@@ -101,6 +121,9 @@ class PangramText:
         """
         Classify a long document using a sliding window to iterate across the full document.
 
+        .. deprecated:: 0.1.8
+           This method is deprecated. Use :meth:`predict_extended` instead for better performance. This method will be removed by April 1st, 2026. 
+
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API, as a dict with the following fields:
@@ -115,6 +138,11 @@ class PangramText:
                 - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
+        warnings.warn(
+            "predict_sliding_window() is deprecated. Use predict_extended() instead for better performance. This method will be removed by April 1st, 2026.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
@@ -139,6 +167,9 @@ class PangramText:
         Sends a request to the Pangram Text API and returns the classification result, along with a
         link to a dashboard page containing the classification result.
 
+        .. deprecated:: 0.1.8
+           This method is deprecated. Use predict_extended with the dashboard flag instead. This method will be removed by April 1st, 2026.
+
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API, as a dict with the following fields:
@@ -154,6 +185,11 @@ class PangramText:
                 - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
         :rtype: dict
         """
+        warnings.warn(
+            "predict_with_dashboard_link() is deprecated. Use predict_extended with the dashboard flag instead. This method will be removed by April 1st, 2026.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         headers = {
             'Content-Type': 'application/json',
             'x-api-key': self.api_key,
@@ -198,6 +234,51 @@ class PangramText:
         }
 
         response = requests.post(PLAGIARISM_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
+
+
+    def predict_extended(self, text: str) -> Dict:
+        """
+        Classify text as AI- or human-written with extended analysis.
+
+        Sends a request to the Pangram Text Extended API and returns precise, windowed results using adaptive boundaries 
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The extended classification result from the API, as a dict with the following fields:
+
+                - text (str): The input text.
+                - avg_ai_likelihood (float): Weighted average AI likelihood score.
+                - max_ai_likelihood (float): Maximum AI likelihood score among all windows.
+                - prediction (str): Long-form prediction string.
+                - prediction_short (str): Short-form prediction string.
+                - headline (str): Classification headline.
+                - windows (list): List of text windows and their classifications.
+                - window_likelihoods (list): AI likelihood scores for each window.
+                - window_indices (list): Indices for each window.
+                - percent_human (float): Percentage classified as human-written.
+                - percent_ai (float): Percentage classified as AI-written.
+                - percent_mixed (float): Percentage classified as mixed.
+                - metadata (dict): Additional metadata about the analysis.
+                - version (str): Analysis version identifier.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or if the response is invalid
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+
+        response = requests.post(TEXT_EXTENDED_API_ENDPOINT, json=input_json, headers=headers, timeout=90)
         if response.status_code != 200:
             raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         response_json = response.json()

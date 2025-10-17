@@ -118,6 +118,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
 .. http:post:: https://text-sliding.api.pangram.com
 
+  .. warning::
+     This endpoint is deprecated. Use the text-extended endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
+
   :<json string text: The input text to segment into windows and classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
   :>json string text: The classified text.
@@ -186,6 +189,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
 .. http:post:: https://dashboard-text.api.pangram.com
 
+  .. warning::
+     This endpoint is deprecated. Use the text-extended endpoint with the dashboard flag instead. This endpoint will be removed by April 1st, 2026.
+
   :<json string text: The input text to classify.
   :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
   :>json string prediction: A string representing the classification.
@@ -251,7 +257,102 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ]
     }
 
+.. http:post:: https://text-extended.pangram.com
 
+  :<json string text: The input text to classify with extended analysis.
+  :<json boolean dashboard: Optional flag to enable dashboard integration (default: false).
+  :<json boolean is_public: Optional flag to control visibility in dashboard (default: true).
+  :>json string text: The input text that was analyzed.
+  :>json float avg_ai_likelihood: Weighted average AI likelihood score across all windows.
+  :>json float max_ai_likelihood: Maximum AI likelihood score among all windows.
+  :>json string prediction: Long-form prediction string representing the classification.
+  :>json string prediction_short: Short-form prediction string ("AI", "Human", "Mixed").
+  :>json string headline: Classification headline summarizing the result.
+  :>json array windows: List of text segments (windows) analyzed individually. Each window contains text, ai_likelihood, label (str), confidence (str), start_index, end_index, and word_count.
+  :>json array window_likelihoods: AI likelihood scores for each window (list of values from 0.0 to 1.0)
+  :>json array window_indices: Indices indicating the position of each window in the original text (list of tuples (start_char_index, end_char_index))
+  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
+  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
+  :>json float fraction_mixed: Fraction of text classified as mixed content (0.0-1.0).
+  :>json object metadata: Additional metadata about the analysis.
+  :>json string version: Analysis version identifier ("adaptive_boundaries").
+  :>json string dashboard_link: Optional dashboard link (only present when dashboard=true). is_public controls visibility of dashboard link, to only your account or all users. 
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>",
+      "dashboard": false,
+      "is_public": true
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text-extended.pangram.com HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze with extended classification",
+      "dashboard": true,
+      "is_public": true
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze with extended classification",
+      "avg_ai_likelihood": 0.75,
+      "max_ai_likelihood": 0.92,
+      "prediction": "Primarily AI-generated, or heavily AI-assisted",
+      "prediction_short": "AI",
+      "headline": "AI Detected",
+      "windows": [
+        {
+          "text": "The text to analyze",
+          "ai_likelihood": 0.85,
+          "label": "AI",
+          "confidence": "Medium",
+          "start_index": 0,
+          "end_index": 19,
+          "word_count": 4
+        },
+        {
+          "text": "with extended classification",
+          "ai_likelihood": 0.65,
+          "label": "AI",
+          "confidence": "Low",
+          "start_index": 20,
+          "end_index": 47,
+          "word_count": 3
+        }
+      ],
+      "window_likelihoods": [0.85, 0.65],
+      "window_indices": [[0, 19], [20, 47]],
+      "fraction_human": 0.25,
+      "fraction_ai": 0.70,
+      "fraction_mixed": 0.05,
+      "metadata": {
+        "request_id": "123e4567-e89b-12d3-a456-426614174000"
+      },
+      "version": "adaptive_boundaries",
+      "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
+    }
 Plagiarism Detection API
 ========================
 
