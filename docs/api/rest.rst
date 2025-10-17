@@ -353,6 +353,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       "version": "adaptive_boundaries",
       "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
     }
+
 Plagiarism Detection API
 ========================
 
