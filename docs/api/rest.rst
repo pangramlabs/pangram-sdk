@@ -257,7 +257,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       ]
     }
 
-.. http:post:: https://text-extended.pangram.com
+.. http:post:: https://text-extended.api.pangram.com
 
   :<json string text: The input text to classify with extended analysis.
   :<json boolean dashboard: Optional flag to enable dashboard integration (default: false).
@@ -301,7 +301,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
   .. code-block:: http
 
-    POST https://text-extended.pangram.com HTTP/1.1
+    POST https://text-extended.api.pangram.com HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
