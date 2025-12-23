@@ -88,7 +88,7 @@ class PangramText:
                 - windows (list): List of text windows and their classifications. Each window contains:
                     - text (str): The window text.
                     - label (str): Descriptive classification label (e.g., "AI-Generated", "Moderately AI-Assisted").
-                    - ai_assistance_score (float): AI assistance score for the window (0.0-1.0).
+                    - ai_assistance_score (float): Score detailing the level of AI assistance within the window (0.0-1.0), where 0 means no AI assistance and 1.0 means AI-generated.
                     - confidence (str): Confidence level for the classification ("High", "Medium", "Low").
                     - start_index (int): Starting character index in the original text.
                     - end_index (int): Ending character index in the original text.
