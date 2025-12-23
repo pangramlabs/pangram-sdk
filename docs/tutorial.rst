@@ -102,4 +102,3 @@ The following methods are deprecated and will be removed by April 1st, 2026:
 - ``predict_extended()`` - Use ``predict()`` instead
 - ``batch_predict()`` - Use ``predict()`` instead
 - ``predict_sliding_window()`` - Use ``predict()`` instead
-- ``predict_with_dashboard_link()`` - Use ``predict()`` instead

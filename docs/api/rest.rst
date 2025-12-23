@@ -3,17 +3,11 @@ Inference API
 
 The Inference API allows you to submit text and receive an AI likelihood score.
 
-.. tip::
-  Use the batch endpoint to maximize throughput when classifying multiple documents.
-
-.. note::
-  ``text.api.pangram.com`` and ``text-batch.api.pangram.com`` only use
-  the first ~400 words of the input text when making its prediction.
-
-  For accurate predictions on longer text with mixed human and AI content,
-  break your document into chunks of ~400 words or use the sliding window API.
 
 .. http:post:: https://text.api.pangram.com
+
+  .. warning::
+     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint (below) instead for better performance. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
@@ -147,6 +141,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
     }
 
 .. http:post:: https://text-batch.api.pangram.com
+
+  .. warning::
+     This endpoint is deprecated. Use the v3 endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
 
   :<json array text: An array of input texts to classify.
   :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction". Each item in the array is the same as a response from a single text prediction.
