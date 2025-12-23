@@ -3,7 +3,7 @@ import os
 import warnings
 from typing import List, Dict, Optional
 
-SOURCE_VERSION = "python_sdk_0.1.9"
+SOURCE_VERSION = "python_sdk_0.1.10"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'

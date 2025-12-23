@@ -66,42 +66,6 @@ Single Pangram model prediction, cuts off text at 512 tokens
     # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
     score = result['ai_likelihood']
 
-Extended prediction 
-~~~~~~~~~~~~~~~~~~~~
-Returns windowed results for long texts
-
-.. code:: python
-
-    from pangram import Pangram
-
-    pangram_client = Pangram()
-    result = pangram_client.predict_extended(text)
-    # Extended analysis with windowed results and detailed metrics
-    avg_score = result['avg_ai_likelihood']
-    max_score = result['max_ai_likelihood']
-    percent_ai = result['percent_ai']
-
-Make a batch request
-~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: python
-
-    from pangram import Pangram
-
-    text_batch = ["text1", "text2"]
-
-    pangram_client = Pangram()
-    results = pangram_client.batch_predict(text_batch)
-    for result in results:
-        text = result["text"]
-        score = result["ai_likelihood"]
-
-Batch Inference
-~~~~~~~~~~~~~~~~~~~~
-Batch inference has significantly higher throughput, but can incur some startup latency especially if
-multiple batch requests are sent at once. Use the single inference endpoint if latency is a strong requirement.
-Use the batch inference endpoint if operating on multiple inputs at once.
-
 Check for Plagiarism
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -129,3 +93,13 @@ The plagiarism detection response includes
 - Total number of sentences checked
 - List of plagiarized sentences
 - Percentage of text that was plagiarized
+
+Deprecated Methods
+~~~~~~~~~~~~~~~~~~~
+
+The following methods are deprecated and will be removed by April 1st, 2026:
+
+- ``predict_extended()`` - Use ``predict()`` instead
+- ``batch_predict()`` - Use ``predict()`` instead
+- ``predict_sliding_window()`` - Use ``predict()`` instead
+- ``predict_with_dashboard_link()`` - Use ``predict()`` instead

@@ -63,7 +63,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 
 .. http:post:: https://text.api.pangram.com/v3
 
-  :<json string text: The input text to classify with Pangram V3 analysis.
+  :<json string text: The input text to analyze with Pangram.
   :>json string text: The input text that was analyzed.
   :>json string version: The API version identifier.
   :>json string headline: Classification headline summarizing the result.
@@ -75,7 +75,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json int num_ai_segments: Number of text segments classified as AI.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
   :>json int num_human_segments: Number of text segments classified as human.
-  :>json array windows: List of text segments (windows) analyzed individually. Each window contains text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
+  :>json array windows: List of text segments (windows) analyzed individually. Each window contains the window text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float between 0 and 1), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
 
   **Request Headers**
 
