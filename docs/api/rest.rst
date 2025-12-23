@@ -7,7 +7,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://text.api.pangram.com
 
   .. warning::
-     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint (below) instead for better performance. This endpoint will be removed by April 1st, 2026.
+     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
