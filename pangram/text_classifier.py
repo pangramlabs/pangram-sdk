@@ -3,7 +3,7 @@ import os
 import warnings
 from typing import List, Dict, Optional
 
-SOURCE_VERSION = "python_sdk_0.1.8"
+SOURCE_VERSION = "python_sdk_0.1.9"
 
 API_ENDPOINT = 'https://text.api.pangramlabs.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
@@ -63,22 +63,56 @@ class PangramText:
         return response_json
 
 
-    def predict(self, text: str):
+    def predict(self, text: str) -> Dict:
         """
-        Classify text as AI- or human-written.
+        Classify text as AI-, AI-assisted, or human-written using the V3 API.
 
-        This method calls predict_short internally for backward compatibility.
+        Sends a request to the Pangram Text API V3 endpoint and returns detailed analysis with windowed results.
+        This endpoint provides enhanced classification with AI-assisted detection and segment-level analysis.
 
         :param text: The text to be classified.
         :type text: str
-        :return: The classification result from the API, as a dict with the following fields:
+        :return: The V3 classification result from the API, as a dict with the following fields:
 
                 - text (str): The input text.
-                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
-                - prediction (str): A string representing the classification.
-        :rtype: dict
+                - version (str): The API version identifier (e.g., "3.0").
+                - headline (str): Classification headline summarizing the result.
+                - prediction (str): Long-form prediction string describing the classification.
+                - prediction_short (str): Short-form prediction string ("AI", "AI-Assisted", "Human", "Mixed").
+                - fraction_ai (float): Fraction of text classified as AI-written (0.0-1.0).
+                - fraction_ai_assisted (float): Fraction of text classified as AI-assisted (0.0-1.0).
+                - fraction_human (float): Fraction of text classified as human-written (0.0-1.0).
+                - num_ai_segments (int): Number of text segments classified as AI.
+                - num_ai_assisted_segments (int): Number of text segments classified as AI-assisted.
+                - num_human_segments (int): Number of text segments classified as human.
+                - windows (list): List of text windows and their classifications. Each window contains:
+                    - text (str): The window text.
+                    - label (str): Descriptive classification label (e.g., "AI-Generated", "Moderately AI-Assisted").
+                    - ai_assistance_score (float): AI assistance score for the window (0.0-1.0).
+                    - confidence (str): Confidence level for the classification ("High", "Medium", "Low").
+                    - start_index (int): Starting character index in the original text.
+                    - end_index (int): Ending character index in the original text.
+                    - word_count (int): Number of words in the window.
+                    - token_length (int): Token length of the window.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or if the response is invalid
         """
-        return self.predict_short(text)
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': self.api_key,
+        }
+        input_json = {
+            "text": text,
+            "source": SOURCE_VERSION,
+        }
+
+        response = requests.post(f"{API_ENDPOINT}/v3", json=input_json, headers=headers, timeout=90)
+        if response.status_code != 200:
+            raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
+        response_json = response.json()
+        if "error" in response_json:
+            raise ValueError(f"Error returned by API: {response_json['error']}")
+        return response_json
 
 
     def batch_predict(self, text_batch: List[str]):

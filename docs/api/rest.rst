@@ -61,6 +61,91 @@ The Inference API allows you to submit text and receive an AI likelihood score.
       "ai_likelihood": 0.92
     }
 
+.. http:post:: https://text.api.pangram.com/v3
+
+  :<json string text: The input text to classify with Pangram V3 analysis.
+  :>json string text: The input text that was analyzed.
+  :>json string version: The API version identifier.
+  :>json string headline: Classification headline summarizing the result.
+  :>json string prediction: Long-form prediction string representing the classification.
+  :>json string prediction_short: Short-form prediction string.
+  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
+  :>json float fraction_ai_assisted: Fraction of text classified as AI-assisted (0.0-1.0).
+  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
+  :>json int num_ai_segments: Number of text segments classified as AI.
+  :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
+  :>json int num_human_segments: Number of text segments classified as human.
+  :>json array windows: List of text segments (windows) analyzed individually. Each window contains text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text.api.pangram.com/v3 HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze with V3 classification"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze with V3 classification",
+      "version": "3.0",
+      "headline": "AI Detected",
+      "prediction": "We are confident that this document is a mix of AI-generated, AI-assisted, and human-written content",
+      "prediction_short": "Mixed",
+      "fraction_ai": 0.70,
+      "fraction_ai_assisted": 0.20,
+      "fraction_human": 0.10,
+      "num_ai_segments": 7,
+      "num_ai_assisted_segments": 2,
+      "num_human_segments": 1,
+      "windows": [
+        {
+          "text": "The text to analyze",
+          "label": "AI-Generated",
+          "ai_assistance_score": 0.85,
+          "confidence": "High",
+          "start_index": 0,
+          "end_index": 19,
+          "word_count": 4,
+          "token_length": 5
+        },
+        {
+          "text": "with V3 classification",
+          "label": "Moderately AI-Assisted",
+          "ai_assistance_score": 0.45,
+          "confidence": "Medium",
+          "start_index": 20,
+          "end_index": 49,
+          "word_count": 4,
+          "token_length": 5
+        }
+      ]
+    }
+
 .. http:post:: https://text-batch.api.pangram.com
 
   :<json array text: An array of input texts to classify.

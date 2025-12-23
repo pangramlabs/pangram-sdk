@@ -32,7 +32,28 @@ Or pass it directly to the constructor:
 Make a request
 ~~~~~~~~~~~~~~
 
-Basic prediction
+Main prediction (V3)
+~~~~~~~~~~~~~~~~~~~~~
+Returns detailed analysis with AI-assisted detection and segment-level metrics
+
+.. code:: python
+
+    from pangram import Pangram
+
+    pangram_client = Pangram()
+    result = pangram_client.predict(text)
+    # V3 analysis with AI-assisted detection
+    fraction_ai = result['fraction_ai']
+    fraction_ai_assisted = result['fraction_ai_assisted']
+    fraction_human = result['fraction_human']
+    num_ai_segments = result['num_ai_segments']
+    # Access individual window classifications
+    for window in result['windows']:
+        label = window['label']
+        ai_assistance_score = window['ai_assistance_score']
+        confidence = window['confidence']
+
+Short prediction
 ~~~~~~~~~~~~~~~~~
 Single Pangram model prediction, cuts off text at 512 tokens
 
@@ -59,20 +80,6 @@ Returns windowed results for long texts
     avg_score = result['avg_ai_likelihood']
     max_score = result['max_ai_likelihood']
     percent_ai = result['percent_ai']
-
-Legacy predict method:
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Calls predict_short internally
-
-.. code:: python
-
-    from pangram import Pangram
-
-    pangram_client = Pangram()
-    result = pangram_client.predict(text)
-    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-    score = result['ai_likelihood']
 
 Make a batch request
 ~~~~~~~~~~~~~~~~~~~~~
