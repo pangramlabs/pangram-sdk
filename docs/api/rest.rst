@@ -69,7 +69,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json int num_ai_segments: Number of text segments classified as AI.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
   :>json int num_human_segments: Number of text segments classified as human.
-  :>json array windows: List of text segments (windows) analyzed individually. Each window contains the window text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float between 0 and 1), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
+  :>json array windows: List of text segments (windows) analyzed individually. Each window contains the window text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float between 0 and 1, where 0 means no AI assistance and 1.0 means AI-generated), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
 
   **Request Headers**
 
