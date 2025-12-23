@@ -68,7 +68,7 @@ class PangramText:
         Classify text as AI-, AI-assisted, or human-written using the V3 API.
 
         Sends a request to the Pangram Text API V3 endpoint and returns detailed analysis with windowed results.
-        This endpoint provides enhanced classification with AI-assisted detection and segment-level analysis.
+        This endpoint provides enhanced classification with AI-assistance detection and segment-level analysis.
 
         :param text: The text to be classified.
         :type text: str

@@ -32,9 +32,9 @@ Or pass it directly to the constructor:
 Make a request
 ~~~~~~~~~~~~~~
 
-Main prediction (V3)
+Main prediction
 ~~~~~~~~~~~~~~~~~~~~~
-Returns detailed analysis with AI-assisted detection and segment-level metrics
+Returns detailed analysis with AI-assistance detection and segment-level metrics
 
 .. code:: python
 
@@ -42,7 +42,7 @@ Returns detailed analysis with AI-assisted detection and segment-level metrics
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
-    # V3 analysis with AI-assisted detection
+    # V3 analysis with AI-assistance detection
     fraction_ai = result['fraction_ai']
     fraction_ai_assisted = result['fraction_ai_assisted']
     fraction_human = result['fraction_human']
