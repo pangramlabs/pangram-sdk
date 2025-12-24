@@ -3,58 +3,6 @@ Inference API
 
 The Inference API allows you to submit text and receive an AI likelihood score.
 
-
-.. http:post:: https://text.api.pangram.com
-
-  .. warning::
-     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
-
-  :<json string text: The input text to classify.
-  :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
-  :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
-  :>json string text: The classified text.
-  :>json string prediction: A string representing the classification.
-  :>json list ai_sentences: If return_ai_sentences was True, then a list of the most indicative AI sentences.
-
-  **Request Headers**
-
-  .. code-block:: json
-
-    {
-      "Content-Type": "application/json",
-      "x-api-key": "<api-key>"
-    }
-
-  **Request Body**
-
-  .. code-block:: json
-
-    {
-      "text": "<text>"
-    }
-
-  **Example Request**
-
-  .. code-block:: http
-
-    POST https://text.api.pangram.com HTTP/1.1
-    Content-Type: application/json
-    x-api-key: your_api_key_here
-
-    {
-      "text": "The text to analyze"
-    }
-
-  **Example Response**
-
-  .. code-block:: json
-
-    {
-      "text": "The text to analyze",
-      "prediction": "Likely AI",
-      "ai_likelihood": 0.92
-    }
-
 .. http:post:: https://text.api.pangram.com/v3
 
   :<json string text: The input text to analyze with Pangram.
@@ -138,6 +86,58 @@ The Inference API allows you to submit text and receive an AI likelihood score.
           "token_length": 5
         }
       ]
+    }
+
+
+.. http:post:: https://text.api.pangram.com
+
+  .. warning::
+     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
+
+  :<json string text: The input text to classify.
+  :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
+  :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
+  :>json string text: The classified text.
+  :>json string prediction: A string representing the classification.
+  :>json list ai_sentences: If return_ai_sentences was True, then a list of the most indicative AI sentences.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text.api.pangram.com HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze",
+      "prediction": "Likely AI",
+      "ai_likelihood": 0.92
     }
 
 .. http:post:: https://text-batch.api.pangram.com

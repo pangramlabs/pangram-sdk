@@ -33,7 +33,7 @@ Make a request
 ~~~~~~~~~~~~~~
 
 Main prediction
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 Returns detailed analysis with AI-assistance detection and segment-level metrics
 
 .. code:: python
