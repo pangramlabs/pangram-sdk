@@ -23,7 +23,26 @@ pangram_client = Pangram(api_key=my_api_key)
 
 ### Make a request
 
-Basic prediction (scans first ~400 words of text, returns a single prediction):
+Main prediction method (V3 - AI-assistance detection and segment-level analysis):
+```
+from pangram import Pangram
+pangram_client = Pangram()
+
+result = pangram_client.predict(text)
+# Analysis with AI-assistance detection
+fraction_ai = result['fraction_ai']
+fraction_ai_assisted = result['fraction_ai_assisted']
+fraction_human = result['fraction_human']
+num_ai_segments = result['num_ai_segments']
+
+# Access individual window classifications
+for window in result['windows']:
+    label = window['label']  # e.g., "AI-Generated", "Moderately AI-Assisted"
+    ai_assistance_score = window['ai_assistance_score']
+    confidence = window['confidence']  # "High", "Medium", "Low"
+```
+
+Short prediction (scans first ~400 words of text, returns a single AI likelihood prediction):
 ```
 from pangram import Pangram
 pangram_client = Pangram()
@@ -33,46 +52,12 @@ result = pangram_client.predict_short(text)
 score = result['ai_likelihood']
 ```
 
-Extended prediction (returns windows of AI/human text in a longer document)
-```
-from pangram import Pangram
-pangram_client = Pangram()
-
-result = pangram_client.predict_extended(text)
-# Extended analysis with windowed results and detailed metrics
-avg_score = result['avg_ai_likelihood']
-max_score = result['max_ai_likelihood']
-percent_ai = result['percent_ai']
-```
-
-Legacy predict method (calls predict_short internally):
-```
-from pangram import Pangram
-pangram_client = Pangram()
-
-result = pangram_client.predict(text)
-# Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-score = result['ai_likelihood']
-```
-
-### Make a batch request
-```
-from pangram import Pangram
-pangram_client = Pangram()
-
-text_batch = ["abc", "def"]
-
-results = pangram_client.batch_predict(text_batch)
-for result in results:
-    text = result['text']
-    score = result['ai_likelihood']
-```
-
 ### Deprecated Methods
 
 The following methods are deprecated and will be removed by April 1st, 2026:
 
-- `predict_sliding_window()` - Use `predict_extended()` instead for better performance
-- `predict_with_dashboard_link()` - Use `predict_extended` with the dashboard flag instead
+- `predict_extended()` - Use `predict()` instead
+- `batch_predict()` - Use `predict()` instead
+- `predict_sliding_window()` - Use `predict()` instead
 
 Questions? Email [support@pangram.com](mailto:support@pangram.com)!

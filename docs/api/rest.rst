@@ -3,17 +3,96 @@ Inference API
 
 The Inference API allows you to submit text and receive an AI likelihood score.
 
-.. tip::
-  Use the batch endpoint to maximize throughput when classifying multiple documents.
+.. http:post:: https://text.api.pangram.com/v3
 
-.. note::
-  ``text.api.pangram.com`` and ``text-batch.api.pangram.com`` only use
-  the first ~400 words of the input text when making its prediction.
+  :<json string text: The input text to analyze with Pangram.
+  :>json string text: The input text that was analyzed.
+  :>json string version: The API version identifier.
+  :>json string headline: Classification headline summarizing the result.
+  :>json string prediction: Long-form prediction string representing the classification.
+  :>json string prediction_short: Short-form prediction string.
+  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
+  :>json float fraction_ai_assisted: Fraction of text classified as AI-assisted (0.0-1.0).
+  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
+  :>json int num_ai_segments: Number of text segments classified as AI.
+  :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
+  :>json int num_human_segments: Number of text segments classified as human.
+  :>json array windows: List of text segments (windows) analyzed individually. Each window contains the window text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float between 0 and 1, where 0 means no AI assistance and 1.0 means AI-generated), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
 
-  For accurate predictions on longer text with mixed human and AI content,
-  break your document into chunks of ~400 words or use the sliding window API.
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text.api.pangram.com/v3 HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze with V3 classification"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze with V3 classification",
+      "version": "3.0",
+      "headline": "AI Detected",
+      "prediction": "We are confident that this document is a mix of AI-generated, AI-assisted, and human-written content",
+      "prediction_short": "Mixed",
+      "fraction_ai": 0.70,
+      "fraction_ai_assisted": 0.20,
+      "fraction_human": 0.10,
+      "num_ai_segments": 7,
+      "num_ai_assisted_segments": 2,
+      "num_human_segments": 1,
+      "windows": [
+        {
+          "text": "The text to analyze",
+          "label": "AI-Generated",
+          "ai_assistance_score": 0.85,
+          "confidence": "High",
+          "start_index": 0,
+          "end_index": 19,
+          "word_count": 4,
+          "token_length": 5
+        },
+        {
+          "text": "with V3 classification",
+          "label": "Moderately AI-Assisted",
+          "ai_assistance_score": 0.45,
+          "confidence": "Medium",
+          "start_index": 20,
+          "end_index": 49,
+          "word_count": 4,
+          "token_length": 5
+        }
+      ]
+    }
+
 
 .. http:post:: https://text.api.pangram.com
+
+  .. warning::
+     Posting to the root route (/) for this endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
@@ -62,6 +141,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
     }
 
 .. http:post:: https://text-batch.api.pangram.com
+
+  .. warning::
+     This endpoint is deprecated. Use the v3 endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
 
   :<json array text: An array of input texts to classify.
   :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction". Each item in the array is the same as a response from a single text prediction.
