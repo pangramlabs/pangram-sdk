@@ -52,6 +52,14 @@ result = pangram_client.predict_short(text)
 score = result['ai_likelihood']
 ```
 
+### Building Documentation
+
+Install docs dependencies and build:
+```
+poetry install --with docs
+cd docs && make html
+```
+
 ### Deprecated Methods
 
 The following methods are deprecated and will be removed by April 1st, 2026:

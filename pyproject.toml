@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pangram-sdk"
-version = "0.1.10"
+version = "0.1.11"
 description = ""
 authors = ["Max Spero <max@pangramlabs.com>"]
 readme = "README.md"
@@ -12,9 +12,10 @@ packages = [
 python = "^3.7"
 requests = "^2.31.0"
 
-[tool.poetry.dev-dependencies]
-sphinx = "^3.0"
-sphinxcontrib-httpdomain = "*"
+[tool.poetry.group.docs.dependencies]
+sphinx = {version = "^7.0", python = ">=3.9"}
+sphinxcontrib-httpdomain = {version = "*", python = ">=3.9"}
+sphinx_rtd_theme = {version = "*", python = ">=3.9"}
 
 [build-system]
 requires = ["poetry-core"]

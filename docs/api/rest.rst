@@ -6,6 +6,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://text.api.pangram.com/v3
 
   :<json string text: The input text to analyze with Pangram.
+  :<json boolean public_dashboard_link: Whether to include a public dashboard link in the response. Defaults to False.
   :>json string text: The input text that was analyzed.
   :>json string version: The API version identifier.
   :>json string headline: Classification headline summarizing the result.
@@ -18,6 +19,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
   :>json int num_human_segments: Number of text segments classified as human.
   :>json array windows: List of text segments (windows) analyzed individually. Each window contains the window text, label (descriptive classification like "AI-Generated", "Moderately AI-Assisted"), ai_assistance_score (float between 0 and 1, where 0 means no AI assistance and 1.0 means AI-generated), confidence (string like "High", "Medium", "Low"), start_index, end_index, word_count, and token_length.
+  :>json string dashboard_link: A link to the dashboard page containing the full classification result. Only present when public_dashboard_link is True.
 
   **Request Headers**
 
@@ -143,7 +145,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://text-batch.api.pangram.com
 
   .. warning::
-     This endpoint is deprecated. Use the v3 endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
+     This endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json array text: An array of input texts to classify.
   :>json array responses: The classification results as a list, each item containing "text", "ai_likelihood", and "prediction". Each item in the array is the same as a response from a single text prediction.
@@ -201,7 +203,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://text-sliding.api.pangram.com
 
   .. warning::
-     This endpoint is deprecated. Use the text-extended endpoint instead for better performance. This endpoint will be removed by April 1st, 2026.
+     This endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to segment into windows and classify.
   :<json bool return_ai_sentences: (Optional, default is False) If True, then return a list of the most indicative AI sentences.
@@ -272,7 +274,7 @@ The Inference API allows you to submit text and receive an AI likelihood score.
 .. http:post:: https://dashboard-text.api.pangram.com
 
   .. warning::
-     This endpoint is deprecated. Use the text-extended endpoint with the dashboard flag instead. This endpoint will be removed by April 1st, 2026.
+     This endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify.
   :>json float ai_likelihood: The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
@@ -340,6 +342,9 @@ The Inference API allows you to submit text and receive an AI likelihood score.
     }
 
 .. http:post:: https://text-extended.api.pangram.com
+
+  .. warning::
+     This endpoint is deprecated. Use the v3 endpoint to access the latest version of Pangram. This endpoint will be removed by April 1st, 2026.
 
   :<json string text: The input text to classify with extended analysis.
   :<json boolean dashboard: Optional flag to enable dashboard integration (default: false).
