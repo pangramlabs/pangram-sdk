@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'pangram'
-copyright = '2024, Max Spero, Bradley Emi'
+copyright = '2026, Max Spero, Bradley Emi'
 author = 'Max Spero, Bradley Emi'
 
 # -- General configuration ---------------------------------------------------
