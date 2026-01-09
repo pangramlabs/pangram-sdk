@@ -9,13 +9,14 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-requests = "^2.31.0"
+python = "^3.9"
+requests = "^2.32.0"
+urllib3 = ">=2.3.0"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = {version = "^7.0", python = ">=3.9"}
-sphinxcontrib-httpdomain = {version = "*", python = ">=3.9"}
-sphinx_rtd_theme = {version = "*", python = ">=3.9"}
+sphinx = "^7.0"
+sphinxcontrib-httpdomain = "*"
+sphinx_rtd_theme = "*"
 
 [build-system]
 requires = ["poetry-core"]
