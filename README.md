@@ -43,16 +43,6 @@ for window in result['windows']:
 ```
 `predict()` submits to Pangram's async AWS inference API and waits for the result before returning.
 
-Short prediction (scans first ~400 words of text, returns a single AI likelihood prediction):
-```
-from pangram import Pangram
-pangram_client = Pangram()
-
-result = pangram_client.predict_short(text)
-# Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-score = result['ai_likelihood']
-```
-
 ### Building Documentation
 
 Install docs dependencies and build:

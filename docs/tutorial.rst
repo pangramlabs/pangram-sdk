@@ -54,19 +54,6 @@ The SDK submits to Pangram's async AWS inference API and waits for the completed
         ai_assistance_score = window['ai_assistance_score']
         confidence = window['confidence']
 
-Short prediction
-~~~~~~~~~~~~~~~~~
-Single Pangram model prediction, cuts off text at 512 tokens
-
-.. code:: python
-
-    from pangram import Pangram
-
-    pangram_client = Pangram()
-    result = pangram_client.predict_short(text)
-    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-    score = result['ai_likelihood']
-
 Check for Plagiarism
 ~~~~~~~~~~~~~~~~~~~~~
 

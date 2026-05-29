@@ -7,7 +7,6 @@ from typing import List, Dict, Optional
 SOURCE_VERSION = "python_sdk_0.1.11"
 
 API_ENDPOINT = 'https://text-async.aws.pangram.com'
-PREDICT_SHORT_API_ENDPOINT = 'https://text.api.pangram.com/v3'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
@@ -147,29 +146,6 @@ class PangramText:
             for key, value in normalized.items()
             if value is not None
         }
-
-    def predict_short(self, text: str):
-        """
-        Classify text as AI- or human-written using the short endpoint.
-
-        Sends a request to the Pangram Text API and returns the classification result.
-
-        :param text: The text to be classified.
-        :type text: str
-        :return: The classification result from the API, as a dict with the following fields:
-
-                - text (str): The input text.
-                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
-                - prediction (str): A string representing the classification.
-        :rtype: dict
-        """
-        input_json = {
-            "text": text,
-            "source": SOURCE_VERSION,
-        }
-        response = requests.post(PREDICT_SHORT_API_ENDPOINT, json=input_json, headers=self._headers(), timeout=90)
-        return self._parse_response_json(response)
-
 
     def predict(
         self,
