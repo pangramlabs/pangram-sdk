@@ -38,9 +38,9 @@ The SDK is minimal with two main files:
 
 ### API Methods
 
-- `predict(text)` - Main V3 endpoint for AI-assistance detection with segment-level analysis
+- `predict(text)` - Main async AWS endpoint for AI-assistance detection with segment-level analysis
 - `check_plagiarism(text)` - Plagiarism detection against online content database
 
 ### API Configuration
 
-API endpoints are defined as constants at the top of `text_classifier.py`. The SDK uses `requests` for HTTP calls and authenticates via `x-api-key` header.
+API endpoints are defined as constants at the top of `text_classifier.py`. The SDK uses `requests` for HTTP calls and authenticates via `x-api-key` header. The main prediction call submits a task and polls until completion.

@@ -23,7 +23,7 @@ pangram_client = Pangram(api_key=my_api_key)
 
 ### Make a request
 
-Main prediction method (V3 - AI-assistance detection and segment-level analysis):
+Main prediction method (AI-assistance detection and segment-level analysis):
 ```
 from pangram import Pangram
 pangram_client = Pangram()
@@ -41,6 +41,7 @@ for window in result['windows']:
     ai_assistance_score = window['ai_assistance_score']
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
+`predict()` submits to Pangram's async AWS inference API and waits for the result before returning.
 
 Short prediction (scans first ~400 words of text, returns a single AI likelihood prediction):
 ```
@@ -59,13 +60,5 @@ Install docs dependencies and build:
 poetry install --with docs
 cd docs && make html
 ```
-
-### Deprecated Methods
-
-The following methods are deprecated and will be removed by April 1st, 2026:
-
-- `predict_extended()` - Use `predict()` instead
-- `batch_predict()` - Use `predict()` instead
-- `predict_sliding_window()` - Use `predict()` instead
 
 Questions? Email [support@pangram.com](mailto:support@pangram.com)!

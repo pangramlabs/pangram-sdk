@@ -35,6 +35,7 @@ Make a request
 Main prediction
 ~~~~~~~~~~~~~~~
 Returns detailed analysis with AI-assistance detection and segment-level metrics
+The SDK submits to Pangram's async AWS inference API and waits for the completed result.
 
 .. code:: python
 
@@ -42,7 +43,7 @@ Returns detailed analysis with AI-assistance detection and segment-level metrics
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
-    # V3 analysis with AI-assistance detection
+    # Analysis with AI-assistance detection
     fraction_ai = result['fraction_ai']
     fraction_ai_assisted = result['fraction_ai_assisted']
     fraction_human = result['fraction_human']
@@ -93,12 +94,3 @@ The plagiarism detection response includes
 - Total number of sentences checked
 - List of plagiarized sentences
 - Percentage of text that was plagiarized
-
-Deprecated Methods
-~~~~~~~~~~~~~~~~~~~
-
-The following methods are deprecated and will be removed by April 1st, 2026:
-
-- ``predict_extended()`` - Use ``predict()`` instead
-- ``batch_predict()`` - Use ``predict()`` instead
-- ``predict_sliding_window()`` - Use ``predict()`` instead
