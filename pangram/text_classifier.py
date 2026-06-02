@@ -92,7 +92,7 @@ class PangramText:
 
             stage = response_json.get("stage")
             if stage == ASYNC_SUCCESS_STAGE:
-                return self._normalize_prediction_response(response_json)
+                return response_json
             if stage == ASYNC_FAILED_STAGE:
                 message = response_json.get("headline") or response_json.get("detail") or "task failed"
                 raise ValueError(f"Error returned by API: task {task_id} failed: {message}")
@@ -102,37 +102,6 @@ class PangramText:
             sleep_for = min(poll_interval, max(0.0, deadline - time.monotonic()))
             if sleep_for > 0:
                 time.sleep(sleep_for)
-
-    @staticmethod
-    def _normalize_prediction_response(response_json: Dict) -> Dict:
-        result = dict(response_json)
-
-        windows = response_json.get("windows")
-        if isinstance(windows, list):
-            result["windows"] = [
-                PangramText._normalize_prediction_window(window)
-                for window in windows
-            ]
-        else:
-            result["windows"] = []
-        return result
-
-    @staticmethod
-    def _normalize_prediction_window(window):
-        if not isinstance(window, dict):
-            return window
-
-        normalized = dict(window)
-        editlens = window.get("editlens")
-        label = window.get("label")
-        if isinstance(editlens, dict):
-            label = editlens.get("prediction_text") or label
-        if label is not None:
-            normalized["label"] = label
-
-        if normalized.get("ai_assistance_score") is None and window.get("ai_likelihood") is not None:
-            normalized["ai_assistance_score"] = window.get("ai_likelihood")
-        return normalized
 
     def predict(
         self,
@@ -149,7 +118,7 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
-        :param public_dashboard_link: Kept for API compatibility. The async inference endpoint returns dashboard links only when supported by the service.
+        :param public_dashboard_link: Kept for API compatibility. The direct async inference endpoint ignores this parameter.
         :type public_dashboard_link: bool
         :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
         :type timeout: float
@@ -157,7 +126,6 @@ class PangramText:
         :type poll_interval: float
         :return: Pangram analysis with AI-assistance detection as a dict with the following fields:
 
-                - task_id (str): The async inference task ID.
                 - stage (str): The terminal async task stage, normally "STAGE_SUCCESS".
                 - text (str): The input text.
                 - version (str): The API version identifier (e.g., "3.0").
@@ -170,7 +138,6 @@ class PangramText:
                 - num_ai_segments (int): Number of text segments classified as AI.
                 - num_ai_assisted_segments (int): Number of text segments classified as AI-assisted.
                 - num_human_segments (int): Number of text segments classified as human.
-                - dashboard_link (str): A link to the dashboard page containing the full classification result, if returned by the service.
                 - windows (list): List of text windows and their classifications. Each window contains:
                     - text (str): The window text.
                     - label (str): Descriptive classification label (e.g., "AI-Generated", "Moderately AI-Assisted").

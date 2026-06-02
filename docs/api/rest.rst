@@ -140,7 +140,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
 .. http:get:: https://text.external-api.pangram.com/task/(string:task_id)
 
-  :>json string task_id: The ID of the async inference task.
+  :>json string task_id: The ID of the async inference task. Present while the task is in progress.
   :>json string stage: Current task stage. Terminal stages are ``STAGE_SUCCESS`` and ``STAGE_FAILED``.
   :>json string text: The input text that was analyzed. Present on success.
   :>json string version: The API version identifier. Present on success.
@@ -177,7 +177,6 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
   .. code-block:: json
 
     {
-      "task_id": "123e4567-e89b-12d3-a456-426614174000",
       "stage": "STAGE_SUCCESS",
       "text": "The text to analyze",
       "version": "3.0",

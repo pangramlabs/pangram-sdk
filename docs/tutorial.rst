@@ -43,7 +43,6 @@ The SDK submits to Pangram's async inference API and waits for the completed res
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
-    task_id = result['task_id']
     stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
 
     # Analysis with AI-assistance detection.
