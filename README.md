@@ -29,7 +29,10 @@ from pangram import Pangram
 pangram_client = Pangram()
 
 result = pangram_client.predict(text)
-# Analysis with AI-assistance detection
+task_id = result['task_id']
+stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+
+# Analysis with AI-assistance detection.
 fraction_ai = result['fraction_ai']
 fraction_ai_assisted = result['fraction_ai_assisted']
 fraction_human = result['fraction_human']
@@ -41,7 +44,7 @@ for window in result['windows']:
     ai_assistance_score = window['ai_assistance_score']
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
-`predict()` submits to Pangram's async AWS inference API and waits for the result before returning.
+`predict()` submits to Pangram's async inference API and waits for the result before returning.
 
 ### Building Documentation
 

@@ -31,6 +31,24 @@ class TestPredict(unittest.TestCase):
                     "task_id": "task-1",
                     "stage": "STAGE_SUCCESS",
                     "text": text,
+                    "version": "3.1",
+                    "headline": "AI Detected",
+                    "prediction": "We believe this is mixed content",
+                    "prediction_short": "Mixed",
+                    "fraction_ai": 0.2,
+                    "fraction_ai_assisted": 0.3,
+                    "fraction_human": 0.5,
+                    "fraction_mixed": 0.3,
+                    "avg_ai_likelihood": 0.4,
+                    "fraction_breakdown": {
+                        "ai": {"high-confidence": 0.2},
+                        "ai-assisted": {"lightly": 0.1, "moderately": 0.2},
+                        "human": {"high-confidence": 0.5},
+                    },
+                    "num_ai_segments": 1,
+                    "num_ai_assisted_segments": 2,
+                    "num_human_segments": 3,
+                    "window_indices": [[0, 45]],
                     "windows": [
                         {
                             "text": "I recently had the pleasure of visiting OpenAI.",
@@ -53,10 +71,19 @@ class TestPredict(unittest.TestCase):
         self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text})
         self.assertEqual(mock_post.call_args.kwargs["headers"]["x-api-key"], "test-key")
         self.assertEqual(result['text'], text)
-        self.assertNotIn("task_id", result)
-        self.assertNotIn("stage", result)
+        self.assertEqual(result["task_id"], "task-1")
+        self.assertEqual(result["stage"], "STAGE_SUCCESS")
+        self.assertEqual(result["version"], "3.1")
+        self.assertEqual(result["prediction_short"], "Mixed")
+        self.assertEqual(result["num_ai_segments"], 1)
+        self.assertEqual(result["fraction_mixed"], 0.3)
+        self.assertEqual(result["avg_ai_likelihood"], 0.4)
+        self.assertEqual(result["fraction_breakdown"]["ai-assisted"], {"lightly": 0.1, "moderately": 0.2})
+        self.assertEqual(result["window_indices"], [[0, 45]])
         self.assertEqual(result["windows"][0]["ai_assistance_score"], 0.92)
         self.assertEqual(result["windows"][0]["label"], "AI-Generated")
+        self.assertEqual(result["windows"][0]["ai_likelihood"], 0.92)
+        self.assertEqual(result["windows"][0]["editlens"], {"prediction_text": "AI-Generated"})
 
     def test_predict_raises_when_async_task_fails(self):
         pangram_client = Pangram(api_key="test-key")

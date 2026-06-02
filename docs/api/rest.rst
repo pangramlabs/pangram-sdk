@@ -1,10 +1,102 @@
 Inference API
 =============
 
-The Inference API accepts text, creates an async task, and returns a task ID.
+The Inference API accepts text and returns the completed Pangram analysis.
+
+.. http:post:: https://text.api.pangram.com/v3
+
+  :<json string text: The input text to analyze with Pangram.
+  :<json boolean public_dashboard_link: Whether to include a public dashboard link in the response. Defaults to false.
+  :>json string text: The input text that was analyzed.
+  :>json string version: The API version identifier.
+  :>json string headline: Classification headline summarizing the result.
+  :>json string prediction: Long-form prediction string representing the classification.
+  :>json string prediction_short: Short-form prediction string.
+  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
+  :>json float fraction_ai_assisted: Fraction of text classified as AI-assisted (0.0-1.0).
+  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
+  :>json int num_ai_segments: Number of text segments classified as AI.
+  :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
+  :>json int num_human_segments: Number of text segments classified as human.
+  :>json array windows: List of analyzed text windows. Each window includes text, label, ai_assistance_score, confidence, start_index, end_index, word_count, and token_length.
+  :>json string dashboard_link: A link to the dashboard page containing the full classification result. Only present when public_dashboard_link is true.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "Content-Type": "application/json",
+      "x-api-key": "<api-key>"
+    }
+
+  **Request Body**
+
+  .. code-block:: json
+
+    {
+      "text": "<text>"
+    }
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://text.api.pangram.com/v3 HTTP/1.1
+    Content-Type: application/json
+    x-api-key: your_api_key_here
+
+    {
+      "text": "The text to analyze with Pangram"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "text": "The text to analyze with Pangram",
+      "version": "3.0",
+      "headline": "AI Detected",
+      "prediction": "We are confident that this document contains AI-generated or AI-assisted content.",
+      "prediction_short": "Mixed",
+      "fraction_ai": 0.70,
+      "fraction_ai_assisted": 0.20,
+      "fraction_human": 0.10,
+      "num_ai_segments": 7,
+      "num_ai_assisted_segments": 2,
+      "num_human_segments": 1,
+      "windows": [
+        {
+          "text": "The text to analyze",
+          "label": "AI-Generated",
+          "ai_assistance_score": 0.85,
+          "confidence": "High",
+          "start_index": 0,
+          "end_index": 19,
+          "word_count": 4,
+          "token_length": 5
+        },
+        {
+          "text": "with Pangram",
+          "label": "Moderately AI-Assisted",
+          "ai_assistance_score": 0.45,
+          "confidence": "Medium",
+          "start_index": 20,
+          "end_index": 32,
+          "word_count": 2,
+          "token_length": 3
+        }
+      ]
+    }
+
+Async Inference API
+===================
+
+The Async Inference API accepts text, creates a task, and returns a task ID.
 Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
-.. http:post:: https://text-async.aws.pangram.com/task
+.. http:post:: https://text.external-api.pangram.com/task
 
   :<json string text: The input text to analyze with Pangram.
   :>json string task_id: The ID of the async inference task.
@@ -30,7 +122,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
   .. code-block:: http
 
-    POST https://text-async.aws.pangram.com/task HTTP/1.1
+    POST https://text.external-api.pangram.com/task HTTP/1.1
     Content-Type: application/json
     x-api-key: your_api_key_here
 
@@ -46,7 +138,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
       "task_id": "123e4567-e89b-12d3-a456-426614174000"
     }
 
-.. http:get:: https://text-async.aws.pangram.com/task/(string:task_id)
+.. http:get:: https://text.external-api.pangram.com/task/(string:task_id)
 
   :>json string task_id: The ID of the async inference task.
   :>json string stage: Current task stage. Terminal stages are ``STAGE_SUCCESS`` and ``STAGE_FAILED``.
@@ -58,14 +150,10 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
   :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0). Present on success.
   :>json float fraction_ai_assisted: Fraction of text classified as AI-assisted (0.0-1.0). Present on success.
   :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0). Present on success.
-  :>json float fraction_mixed: Fraction of text classified as mixed. Present on success.
-  :>json float avg_ai_likelihood: Average AI likelihood across analyzed windows. Present on success.
-  :>json object fraction_breakdown: Confidence-level fraction breakdown. Present on success.
   :>json int num_ai_segments: Number of text segments classified as AI. Present on success.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted. Present on success.
   :>json int num_human_segments: Number of text segments classified as human. Present on success.
-  :>json array window_indices: Start/end character indices for each analyzed window. Present on success.
-  :>json array windows: List of analyzed text windows. Each window includes text, ai_likelihood, label, confidence, start_index, end_index, word_count, token_length, and editlens metadata.
+  :>json array windows: List of analyzed text windows. Each window includes text, label, ai_assistance_score, confidence, start_index, end_index, word_count, and token_length. Present on success.
 
   **Request Headers**
 
@@ -99,54 +187,29 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
       "fraction_ai": 0.70,
       "fraction_ai_assisted": 0.20,
       "fraction_human": 0.10,
-      "fraction_mixed": 0.00,
-      "avg_ai_likelihood": 0.78,
-      "fraction_breakdown": {
-        "ai": {
-          "high-confidence": 0.50,
-          "medium-confidence": 0.20,
-          "low-confidence": 0.00
-        },
-        "ai-assisted": {
-          "lightly": 0.10,
-          "moderately": 0.10
-        },
-        "human": {
-          "high-confidence": 0.10,
-          "medium-confidence": 0.00,
-          "low-confidence": 0.00
-        }
-      },
       "num_ai_segments": 7,
       "num_ai_assisted_segments": 2,
       "num_human_segments": 1,
-      "window_indices": [[0, 19], [20, 49]],
       "windows": [
         {
           "text": "The text to analyze",
-          "ai_likelihood": 0.85,
           "label": "AI-Generated",
+          "ai_assistance_score": 0.85,
           "confidence": "High",
           "start_index": 0,
           "end_index": 19,
           "word_count": 4,
-          "token_length": 5,
-          "editlens": {
-            "prediction_text": "AI-Generated"
-          }
+          "token_length": 5
         },
         {
           "text": "with classification",
-          "ai_likelihood": 0.45,
           "label": "Moderately AI-Assisted",
+          "ai_assistance_score": 0.45,
           "confidence": "Medium",
           "start_index": 20,
           "end_index": 49,
           "word_count": 2,
-          "token_length": 3,
-          "editlens": {
-            "prediction_text": "Moderately AI-Assisted"
-          }
+          "token_length": 3
         }
       ]
     }

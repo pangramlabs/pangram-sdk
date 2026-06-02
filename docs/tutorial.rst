@@ -35,7 +35,7 @@ Make a request
 Main prediction
 ~~~~~~~~~~~~~~~
 Returns detailed analysis with AI-assistance detection and segment-level metrics
-The SDK submits to Pangram's async AWS inference API and waits for the completed result.
+The SDK submits to Pangram's async inference API and waits for the completed result.
 
 .. code:: python
 
@@ -43,7 +43,10 @@ The SDK submits to Pangram's async AWS inference API and waits for the completed
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
-    # Analysis with AI-assistance detection
+    task_id = result['task_id']
+    stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+
+    # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
     fraction_ai_assisted = result['fraction_ai_assisted']
     fraction_human = result['fraction_human']

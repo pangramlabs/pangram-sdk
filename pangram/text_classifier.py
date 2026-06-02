@@ -6,7 +6,7 @@ from typing import List, Dict, Optional
 
 SOURCE_VERSION = "python_sdk_0.1.11"
 
-API_ENDPOINT = 'https://text-async.aws.pangram.com'
+API_ENDPOINT = 'https://text.external-api.pangram.com'
 BATCH_API_ENDPOINT = 'https://text-batch.api.pangramlabs.com'
 SLIDING_WINDOW_API_ENDPOINT = 'https://text-sliding.api.pangramlabs.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
@@ -106,15 +106,15 @@ class PangramText:
     @staticmethod
     def _normalize_prediction_response(response_json: Dict) -> Dict:
         result = dict(response_json)
-        result.pop("task_id", None)
-        result.pop("stage", None)
 
-        windows = result.get("windows")
+        windows = response_json.get("windows")
         if isinstance(windows, list):
             result["windows"] = [
                 PangramText._normalize_prediction_window(window)
                 for window in windows
             ]
+        else:
+            result["windows"] = []
         return result
 
     @staticmethod
@@ -122,30 +122,17 @@ class PangramText:
         if not isinstance(window, dict):
             return window
 
+        normalized = dict(window)
         editlens = window.get("editlens")
         label = window.get("label")
         if isinstance(editlens, dict):
             label = editlens.get("prediction_text") or label
+        if label is not None:
+            normalized["label"] = label
 
-        ai_assistance_score = window.get("ai_assistance_score")
-        if ai_assistance_score is None:
-            ai_assistance_score = window.get("ai_likelihood")
-
-        normalized = {
-            "text": window.get("text"),
-            "label": label,
-            "ai_assistance_score": ai_assistance_score,
-            "confidence": window.get("confidence"),
-            "start_index": window.get("start_index"),
-            "end_index": window.get("end_index"),
-            "word_count": window.get("word_count"),
-            "token_length": window.get("token_length"),
-        }
-        return {
-            key: value
-            for key, value in normalized.items()
-            if value is not None
-        }
+        if normalized.get("ai_assistance_score") is None and window.get("ai_likelihood") is not None:
+            normalized["ai_assistance_score"] = window.get("ai_likelihood")
+        return normalized
 
     def predict(
         self,
@@ -157,7 +144,7 @@ class PangramText:
         """
         Classify text as AI-, AI-assisted, or human-written.
 
-        Submits the text to Pangram's async AWS inference endpoint, waits for completion,
+        Submits the text to Pangram's async inference endpoint, waits for completion,
         and returns analysis with windowed results.
 
         :param text: The text to be classified.
@@ -170,6 +157,8 @@ class PangramText:
         :type poll_interval: float
         :return: Pangram analysis with AI-assistance detection as a dict with the following fields:
 
+                - task_id (str): The async inference task ID.
+                - stage (str): The terminal async task stage, normally "STAGE_SUCCESS".
                 - text (str): The input text.
                 - version (str): The API version identifier (e.g., "3.0").
                 - headline (str): Classification headline summarizing the result.
