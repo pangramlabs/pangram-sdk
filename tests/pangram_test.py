@@ -84,6 +84,16 @@ class TestPredict(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "timeout must be greater than 0"):
             pangram_client.predict("hello", timeout=0)
 
+    def test_predict_short_forwards_to_predict(self):
+        text = "hello!"
+        pangram_client = Pangram(api_key="test-key")
+        with patch.object(PangramText, "predict", return_value={"text": text}) as mock_predict:
+            with self.assertWarnsRegex(DeprecationWarning, "predict_short"):
+                result = pangram_client.predict_short(text)
+
+        mock_predict.assert_called_once_with(text)
+        self.assertEqual(result, {"text": text})
+
 class TestBatchPredict(unittest.TestCase):
     def test_batch_predict(self):
         text1 = "I recently had the pleasure of visiting OpenAI. As an AI language model, I cannot actually visit places."

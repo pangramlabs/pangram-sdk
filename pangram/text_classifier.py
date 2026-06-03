@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+import warnings
 from typing import List, Dict, Optional
 
 SOURCE_VERSION = "python_sdk_0.1.11"
@@ -156,6 +157,27 @@ class PangramText:
         deadline = time.monotonic() + timeout
         task_id = self._submit_prediction_task(text, deadline, public_dashboard_link)
         return self._poll_prediction_task(task_id, deadline, timeout, poll_interval)
+
+
+    def predict_short(self, text: str) -> Dict:
+        """
+        Classify text using the main async prediction endpoint.
+
+        .. deprecated::
+           This compatibility alias forwards to :meth:`predict`. Use
+           :meth:`predict` directly for Pangram's current response schema.
+
+        :param text: The text to be classified.
+        :type text: str
+        :return: The same classification result returned by :meth:`predict`.
+        :rtype: Dict
+        """
+        warnings.warn(
+            "predict_short() is deprecated and forwards to predict(). Use predict() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.predict(text)
 
 
     def batch_predict(self, text_batch: List[str]) -> List[Dict]:
