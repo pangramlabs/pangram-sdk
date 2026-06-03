@@ -4,7 +4,7 @@ import time
 import warnings
 from typing import List, Dict, Optional
 
-SOURCE_VERSION = "python_sdk_0.1.11"
+SOURCE_VERSION = "python_sdk_0.2.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
@@ -12,6 +12,7 @@ ASYNC_SUCCESS_STAGE = 'STAGE_SUCCESS'
 ASYNC_FAILED_STAGE = 'STAGE_FAILED'
 DEFAULT_PREDICT_TIMEOUT_SECONDS = 300
 DEFAULT_POLL_INTERVAL_SECONDS = 0.5
+MIN_POLL_INTERVAL_SECONDS = 0.1
 HTTP_REQUEST_TIMEOUT_SECONDS = 10
 
 class PangramText:
@@ -119,7 +120,7 @@ class PangramText:
         :type public_dashboard_link: bool
         :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
         :type timeout: float
-        :param poll_interval: Seconds to wait between polling attempts. Defaults to 0.5.
+        :param poll_interval: Seconds to wait between polling attempts. Values below 0.1 are clamped to 0.1. Defaults to 0.5.
         :type poll_interval: float
         :return: Pangram analysis with AI-assistance detection as a dict with the following fields:
 
@@ -156,7 +157,12 @@ class PangramText:
 
         deadline = time.monotonic() + timeout
         task_id = self._submit_prediction_task(text, deadline, public_dashboard_link)
-        return self._poll_prediction_task(task_id, deadline, timeout, poll_interval)
+        return self._poll_prediction_task(
+            task_id,
+            deadline,
+            timeout,
+            max(MIN_POLL_INTERVAL_SECONDS, poll_interval),
+        )
 
 
     def predict_short(self, text: str) -> Dict:

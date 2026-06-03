@@ -7,7 +7,6 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 .. http:post:: https://text.external-api.pangram.com/task
 
   :<json string text: The input text to analyze with Pangram.
-  :<json integer priority: Optional task priority. Defaults to 1.
   :<json boolean public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to false.
   :>json string task_id: The ID of the async inference task.
 
@@ -26,7 +25,6 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
     {
       "text": "<text>",
-      "priority": 1,
       "public_dashboard_link": false
     }
 
@@ -40,7 +38,6 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
     {
       "text": "The text to analyze",
-      "priority": 1,
       "public_dashboard_link": true
     }
 
@@ -129,6 +126,26 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
       ]
     }
 
+  **Failed Response**
+
+  .. code-block:: json
+
+    {
+      "stage": "STAGE_FAILED",
+      "text": "",
+      "version": "",
+      "headline": "preprocessing: Input text contains no valid text after preprocessing",
+      "prediction": "",
+      "prediction_short": "",
+      "fraction_ai": 0.0,
+      "fraction_ai_assisted": 0.0,
+      "fraction_human": 0.0,
+      "num_ai_segments": 0,
+      "num_ai_assisted_segments": 0,
+      "num_human_segments": 0,
+      "windows": []
+    }
+
 Plagiarism Detection API
 ========================
 
@@ -199,6 +216,9 @@ The API may return the following error codes:
 - ``400 Bad Request`` - If the request body is not properly formatted.
 - ``401 Unauthorized`` - If the ``x-api-key`` is missing or invalid.
 - ``402 Payment Required`` - If the account has insufficient credits.
+- ``403 Forbidden`` - If the API key does not own the requested task.
+- ``404 Not Found`` - If the requested task does not exist.
+- ``422 Unprocessable Entity`` - If the input text is invalid.
 - ``429 Too Many Requests`` - If the API key exceeds its configured rate limit.
 - ``500 Internal Server Error`` - If there is an error processing the request.
 

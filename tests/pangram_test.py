@@ -1,6 +1,6 @@
 import unittest
 from pangram import Pangram, PangramText
-from pangram.text_classifier import API_ENDPOINT
+from pangram.text_classifier import API_ENDPOINT, MIN_POLL_INTERVAL_SECONDS
 import os
 from unittest.mock import patch
 
@@ -55,12 +55,13 @@ class TestPredict(unittest.TestCase):
                 MockResponse(json_data={"task_id": "task-1", "stage": "STAGE_PREPROCESSING"}),
                 MockResponse(json_data=success_response),
             ],
-        ):
+        ), patch("pangram.text_classifier.time.sleep") as mock_sleep:
             result = pangram_client.predict(text, poll_interval=0)
 
         self.assertEqual(mock_post.call_args.args[0], f"{API_ENDPOINT}/task")
         self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text, "public_dashboard_link": False})
         self.assertEqual(mock_post.call_args.kwargs["headers"]["x-api-key"], "test-key")
+        mock_sleep.assert_called_once_with(MIN_POLL_INTERVAL_SECONDS)
         self.assertEqual(result, success_response)
 
     def test_predict_raises_when_async_task_fails(self):
