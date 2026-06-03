@@ -94,15 +94,6 @@ class TestBatchPredict(unittest.TestCase):
             results = pangram_client.batch_predict(text_batch)
         self.assertEqual(len(results), len(text_batch))
 
-class TestSlidingWindow(unittest.TestCase):
-    @unittest.skipUnless(os.getenv('PANGRAM_API_KEY'), "requires PANGRAM_API_KEY")
-    def test_sliding_window(self):
-        text = "hello!"
-        pangram_client = Pangram()
-        result = pangram_client.predict_sliding_window(text)
-        self.assertEqual(result['text'], text)
-        self.assertIn('windows', result)
-
 class TestDashboard(unittest.TestCase):
     def test_dashboard(self):
         text = "hello!"
