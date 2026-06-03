@@ -102,7 +102,8 @@ class TestBatchPredict(unittest.TestCase):
         text_batch = [text1, text2]
         pangram_client = Pangram(api_key="test-key")
         with patch.object(PangramText, "predict", side_effect=[{"text": text1}, {"text": text2}]):
-            results = pangram_client.batch_predict(text_batch)
+            with self.assertWarnsRegex(DeprecationWarning, "batch_predict"):
+                results = pangram_client.batch_predict(text_batch)
         self.assertEqual(len(results), len(text_batch))
 
 class TestDashboard(unittest.TestCase):

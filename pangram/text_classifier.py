@@ -194,12 +194,23 @@ class PangramText:
 
         This method iterates through the batch and calls predict() for each text.
 
+        .. deprecated::
+           This compatibility method forwards to :meth:`predict` once per
+           input text. Use :meth:`predict` directly. This method may be
+           removed on August 1, 2026.
+
         :param text_batch: A list of strings to be classified.
         :type text_batch: List[str]
         :return: A list of classification results from the API for each text in the batch.
                  Each result is a dict with the same fields as returned by predict().
         :rtype: List[Dict]
         """
+        warnings.warn(
+            "batch_predict() is deprecated and forwards to predict() once per input text. "
+            "Use predict() directly. This method may be removed on August 1, 2026.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         results = []
         for text in text_batch:
             result = self.predict(text)
