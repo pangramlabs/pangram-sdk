@@ -29,7 +29,6 @@ from pangram import Pangram
 pangram_client = Pangram()
 
 result = pangram_client.predict(text)
-task_id = result['task_id']
 stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
 
 # Analysis with AI-assistance detection.
@@ -45,6 +44,7 @@ for window in result['windows']:
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
 `predict()` submits to Pangram's async inference API and waits for the result before returning.
+Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text)` to include a `dashboard_link` in the completed result.
 
 ### Building Documentation
 

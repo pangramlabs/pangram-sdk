@@ -7,6 +7,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 .. http:post:: https://text.external-api.pangram.com/task
 
   :<json string text: The input text to analyze with Pangram.
+  :<json integer priority: Optional task priority. Defaults to 1.
   :<json boolean public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to false.
   :>json string task_id: The ID of the async inference task.
 
@@ -25,6 +26,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
     {
       "text": "<text>",
+      "priority": 1,
       "public_dashboard_link": false
     }
 
@@ -38,7 +40,8 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
     {
       "text": "The text to analyze",
-      "public_dashboard_link": false
+      "priority": 1,
+      "public_dashboard_link": true
     }
 
   **Example Response**

@@ -228,22 +228,22 @@ class PangramText:
         """
         Classify text as AI-, AI-assisted, or human-written.
 
-        Sends a request to the Pangram Text API and returns the classification result.
-        The async inference endpoint returns a dashboard link only when supported by the service.
+        Submits the text to Pangram's async inference endpoint, waits for completion,
+        and returns analysis with a public dashboard link.
 
         :param text: The text to be classified.
         :type text: str
         :return: The classification result from the API, as a dict with the following fields:
 
                 - text (string): The classified text.
-                - dashboard_link (string): A link to a dashboard page containing the classification result, if returned by the service.
-                - ai_likelihood (float): The classification of the text, on a scale from 0.0 (human) to 1.0 (AI).
-                - max_ai_likelihood (float): The maximum AI likelihood score among all windows.
-                - avg_ai_likelihood (float): The average AI likelihood score among all windows.
-                - prediction (string): A string representing the classification.
-                - short_prediction (string): A short string representing the classification ("AI", "Human", "Mixed").
-                - fraction_ai_content (float): The fraction of windows that are classified as AI.
-                - windows (list): A list of windows and their individual classifications. Each object in the list is the response from a single text prediction.
+                - dashboard_link (string): A link to a dashboard page containing the classification result.
+                - stage (string): The terminal async task stage, normally "STAGE_SUCCESS".
+                - prediction (string): Long-form prediction string describing the classification.
+                - prediction_short (string): Short-form prediction string.
+                - fraction_ai (float): Fraction of text classified as AI-written (0.0-1.0).
+                - fraction_ai_assisted (float): Fraction of text classified as AI-assisted (0.0-1.0).
+                - fraction_human (float): Fraction of text classified as human-written (0.0-1.0).
+                - windows (list): List of text windows and their classifications.
         :rtype: dict
         """
         return self.predict(text, public_dashboard_link=True)
