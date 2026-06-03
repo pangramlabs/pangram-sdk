@@ -11,7 +11,7 @@ ASYNC_SUCCESS_STAGE = 'STAGE_SUCCESS'
 ASYNC_FAILED_STAGE = 'STAGE_FAILED'
 DEFAULT_PREDICT_TIMEOUT_SECONDS = 300
 DEFAULT_POLL_INTERVAL_SECONDS = 0.5
-REQUEST_TIMEOUT_SECONDS = 10
+HTTP_REQUEST_TIMEOUT_SECONDS = 10
 
 class PangramText:
     def __init__(self, api_key: Optional[str] = None) -> None:
@@ -37,7 +37,7 @@ class PangramText:
 
     def _request_timeout(self, deadline: float) -> float:
         remaining = deadline - time.monotonic()
-        return max(0.1, min(REQUEST_TIMEOUT_SECONDS, remaining))
+        return max(0.1, min(HTTP_REQUEST_TIMEOUT_SECONDS, remaining))
 
     def _parse_response_json(self, response: requests.Response):
         if response.status_code != 200:
