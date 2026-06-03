@@ -166,6 +166,7 @@ class PangramText:
         .. deprecated::
            This compatibility alias forwards to :meth:`predict`. Use
            :meth:`predict` directly for Pangram's current response schema.
+           This method may be removed on August 1, 2026.
 
         :param text: The text to be classified.
         :type text: str
@@ -173,7 +174,8 @@ class PangramText:
         :rtype: Dict
         """
         warnings.warn(
-            "predict_short() is deprecated and forwards to predict(). Use predict() instead.",
+            "predict_short() is deprecated and forwards to predict(). "
+            "Use predict() instead. This method may be removed on August 1, 2026.",
             DeprecationWarning,
             stacklevel=2,
         )
