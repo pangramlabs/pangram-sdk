@@ -1,104 +1,13 @@
 Inference API
 =============
 
-The Inference API accepts text and returns the completed Pangram analysis.
-
-.. http:post:: https://text.api.pangram.com/v3
-
-  :<json string text: The input text to analyze with Pangram.
-  :<json boolean public_dashboard_link: Whether to include a public dashboard link in the response. Defaults to false.
-  :>json string text: The input text that was analyzed.
-  :>json string version: The API version identifier.
-  :>json string headline: Classification headline summarizing the result.
-  :>json string prediction: Long-form prediction string representing the classification.
-  :>json string prediction_short: Short-form prediction string.
-  :>json float fraction_ai: Fraction of text classified as AI-written (0.0-1.0).
-  :>json float fraction_ai_assisted: Fraction of text classified as AI-assisted (0.0-1.0).
-  :>json float fraction_human: Fraction of text classified as human-written (0.0-1.0).
-  :>json int num_ai_segments: Number of text segments classified as AI.
-  :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted.
-  :>json int num_human_segments: Number of text segments classified as human.
-  :>json array windows: List of analyzed text windows. Each window includes text, label, ai_assistance_score, confidence, start_index, end_index, word_count, and token_length.
-  :>json string dashboard_link: A link to the dashboard page containing the full classification result. Only present when public_dashboard_link is true.
-
-  **Request Headers**
-
-  .. code-block:: json
-
-    {
-      "Content-Type": "application/json",
-      "x-api-key": "<api-key>"
-    }
-
-  **Request Body**
-
-  .. code-block:: json
-
-    {
-      "text": "<text>"
-    }
-
-  **Example Request**
-
-  .. code-block:: http
-
-    POST https://text.api.pangram.com/v3 HTTP/1.1
-    Content-Type: application/json
-    x-api-key: your_api_key_here
-
-    {
-      "text": "The text to analyze with Pangram"
-    }
-
-  **Example Response**
-
-  .. code-block:: json
-
-    {
-      "text": "The text to analyze with Pangram",
-      "version": "3.0",
-      "headline": "AI Detected",
-      "prediction": "We are confident that this document contains AI-generated or AI-assisted content.",
-      "prediction_short": "Mixed",
-      "fraction_ai": 0.70,
-      "fraction_ai_assisted": 0.20,
-      "fraction_human": 0.10,
-      "num_ai_segments": 7,
-      "num_ai_assisted_segments": 2,
-      "num_human_segments": 1,
-      "windows": [
-        {
-          "text": "The text to analyze",
-          "label": "AI-Generated",
-          "ai_assistance_score": 0.85,
-          "confidence": "High",
-          "start_index": 0,
-          "end_index": 19,
-          "word_count": 4,
-          "token_length": 5
-        },
-        {
-          "text": "with Pangram",
-          "label": "Moderately AI-Assisted",
-          "ai_assistance_score": 0.45,
-          "confidence": "Medium",
-          "start_index": 20,
-          "end_index": 32,
-          "word_count": 2,
-          "token_length": 3
-        }
-      ]
-    }
-
-Async Inference API
-===================
-
-The Async Inference API accepts text, creates a task, and returns a task ID.
+The Inference API accepts text, creates a task, and returns a task ID.
 Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
 .. http:post:: https://text.external-api.pangram.com/task
 
   :<json string text: The input text to analyze with Pangram.
+  :<json boolean public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to false.
   :>json string task_id: The ID of the async inference task.
 
   **Request Headers**
@@ -115,7 +24,8 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
   .. code-block:: json
 
     {
-      "text": "<text>"
+      "text": "<text>",
+      "public_dashboard_link": false
     }
 
   **Example Request**
@@ -127,7 +37,8 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
     x-api-key: your_api_key_here
 
     {
-      "text": "The text to analyze"
+      "text": "The text to analyze",
+      "public_dashboard_link": false
     }
 
   **Example Response**
@@ -154,6 +65,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted. Present on success.
   :>json int num_human_segments: Number of text segments classified as human. Present on success.
   :>json array windows: List of analyzed text windows. Each window includes text, label, ai_assistance_score, confidence, start_index, end_index, word_count, and token_length. Present on success.
+  :>json string dashboard_link: A link to the dashboard page containing the full classification result. Present on success when public_dashboard_link is true.
 
   **Request Headers**
 
@@ -189,6 +101,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
       "num_ai_segments": 7,
       "num_ai_assisted_segments": 2,
       "num_human_segments": 1,
+      "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000",
       "windows": [
         {
           "text": "The text to analyze",

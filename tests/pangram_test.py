@@ -59,7 +59,7 @@ class TestPredict(unittest.TestCase):
             result = pangram_client.predict(text, poll_interval=0)
 
         self.assertEqual(mock_post.call_args.args[0], f"{API_ENDPOINT}/task")
-        self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text})
+        self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text, "public_dashboard_link": False})
         self.assertEqual(mock_post.call_args.kwargs["headers"]["x-api-key"], "test-key")
         self.assertEqual(result, success_response)
 
@@ -107,10 +107,25 @@ class TestDashboard(unittest.TestCase):
     def test_dashboard(self):
         text = "hello!"
         pangram_client = Pangram(api_key="test-key")
-        with patch.object(PangramText, "predict", return_value={"text": text}) as mock_predict:
+        success_response = {
+            "stage": "STAGE_SUCCESS",
+            "text": text,
+            "dashboard_link": "https://www.pangram.com/history/query-1",
+            "windows": [],
+        }
+
+        with patch(
+            "pangram.text_classifier.requests.post",
+            return_value=MockResponse(json_data={"task_id": "task-1"}),
+        ) as mock_post, patch(
+            "pangram.text_classifier.requests.get",
+            return_value=MockResponse(json_data=success_response),
+        ):
             result = pangram_client.predict_with_dashboard_link(text)
-        self.assertEqual(result['text'], text)
-        mock_predict.assert_called_once_with(text, public_dashboard_link=True)
+
+        self.assertEqual(mock_post.call_args.args[0], f"{API_ENDPOINT}/task")
+        self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text, "public_dashboard_link": True})
+        self.assertEqual(result, success_response)
 
 class TestPlagiarism(unittest.TestCase):
     @unittest.skipUnless(os.getenv('PANGRAM_API_KEY'), "requires PANGRAM_API_KEY")

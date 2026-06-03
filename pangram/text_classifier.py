@@ -54,10 +54,10 @@ class PangramText:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
 
-    def _submit_prediction_task(self, text: str, deadline: float) -> str:
+    def _submit_prediction_task(self, text: str, deadline: float, public_dashboard_link: bool) -> str:
         response = requests.post(
             f"{API_ENDPOINT}/task",
-            json={"text": text},
+            json={"text": text, "public_dashboard_link": public_dashboard_link},
             headers=self._headers(),
             timeout=self._request_timeout(deadline),
         )
@@ -118,7 +118,7 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
-        :param public_dashboard_link: Kept for API compatibility. The direct async inference endpoint ignores this parameter.
+        :param public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to False.
         :type public_dashboard_link: bool
         :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
         :type timeout: float
@@ -138,6 +138,7 @@ class PangramText:
                 - num_ai_segments (int): Number of text segments classified as AI.
                 - num_ai_assisted_segments (int): Number of text segments classified as AI-assisted.
                 - num_human_segments (int): Number of text segments classified as human.
+                - dashboard_link (str): A link to the dashboard page containing the full classification result, if requested.
                 - windows (list): List of text windows and their classifications. Each window contains:
                     - text (str): The window text.
                     - label (str): Descriptive classification label (e.g., "AI-Generated", "Moderately AI-Assisted").
@@ -157,7 +158,7 @@ class PangramText:
             raise ValueError("poll_interval cannot be negative")
 
         deadline = time.monotonic() + timeout
-        task_id = self._submit_prediction_task(text, deadline)
+        task_id = self._submit_prediction_task(text, deadline, public_dashboard_link)
         return self._poll_prediction_task(task_id, deadline, timeout, poll_interval)
 
 
