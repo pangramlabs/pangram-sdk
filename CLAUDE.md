@@ -21,7 +21,7 @@ Most tests are mocked unit tests. Live plagiarism coverage is skipped unless `PA
 
 **Run a single test:**
 ```bash
-poetry run python -m unittest tests/pangram_test.py::TestPredict::test_predict
+poetry run python -m unittest tests.pangram_test.TestPredict.test_predict
 ```
 
 **Build documentation:**
