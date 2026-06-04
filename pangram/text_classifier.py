@@ -89,7 +89,14 @@ class PangramText:
                     timeout=self._request_timeout(deadline),
                 )
             except requests.RequestException as exc:
-                raise ValueError(f"Pangram API request failed while polling prediction task {task_id}: {exc}") from exc
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Pangram prediction task {task_id} did not complete within {timeout:.0f}s"
+                    ) from exc
+                sleep_for = min(poll_interval, max(0.0, deadline - time.monotonic()))
+                if sleep_for > 0:
+                    time.sleep(sleep_for)
+                continue
             response_json = self._parse_response_json(response)
             if not isinstance(response_json, dict):
                 raise ValueError(f"Error returned by API: invalid task result: {response_json}")

@@ -95,17 +95,28 @@ class TestPredict(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "submitting prediction task: timed out"):
                 pangram_client.predict("hello")
 
-    def test_predict_wraps_poll_request_errors(self):
+    def test_predict_retries_poll_request_errors(self):
         pangram_client = Pangram(api_key="test-key")
+        success_response = {
+            "stage": "STAGE_SUCCESS",
+            "text": "hello",
+            "prediction_short": "Human",
+            "windows": [],
+        }
         with patch(
             "pangram.text_classifier.requests.post",
             return_value=MockResponse(json_data={"task_id": "task-1"}),
         ), patch(
             "pangram.text_classifier.requests.get",
-            side_effect=requests.exceptions.ConnectionError("connection dropped"),
-        ):
-            with self.assertRaisesRegex(ValueError, "polling prediction task task-1: connection dropped"):
-                pangram_client.predict("hello", poll_interval=0)
+            side_effect=[
+                requests.exceptions.ConnectionError("connection dropped"),
+                MockResponse(json_data=success_response),
+            ],
+        ), patch("pangram.text_classifier.time.sleep") as mock_sleep:
+            result = pangram_client.predict("hello", poll_interval=0)
+
+        mock_sleep.assert_called_once_with(MIN_POLL_INTERVAL_SECONDS)
+        self.assertEqual(result, success_response)
 
     def test_predict_short_forwards_to_predict(self):
         text = "hello!"
