@@ -35,6 +35,7 @@ Make a request
 Main prediction
 ~~~~~~~~~~~~~~~
 Returns detailed analysis with AI-assistance detection and segment-level metrics
+The SDK submits to Pangram's async inference API and waits for the completed result.
 
 .. code:: python
 
@@ -42,7 +43,9 @@ Returns detailed analysis with AI-assistance detection and segment-level metrics
 
     pangram_client = Pangram()
     result = pangram_client.predict(text)
-    # V3 analysis with AI-assistance detection
+    stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+
+    # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
     fraction_ai_assisted = result['fraction_ai_assisted']
     fraction_human = result['fraction_human']
@@ -52,19 +55,6 @@ Returns detailed analysis with AI-assistance detection and segment-level metrics
         label = window['label']
         ai_assistance_score = window['ai_assistance_score']
         confidence = window['confidence']
-
-Short prediction
-~~~~~~~~~~~~~~~~~
-Single Pangram model prediction, cuts off text at 512 tokens
-
-.. code:: python
-
-    from pangram import Pangram
-
-    pangram_client = Pangram()
-    result = pangram_client.predict_short(text)
-    # Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-    score = result['ai_likelihood']
 
 Check for Plagiarism
 ~~~~~~~~~~~~~~~~~~~~~
@@ -93,12 +83,3 @@ The plagiarism detection response includes
 - Total number of sentences checked
 - List of plagiarized sentences
 - Percentage of text that was plagiarized
-
-Deprecated Methods
-~~~~~~~~~~~~~~~~~~~
-
-The following methods are deprecated and will be removed by April 1st, 2026:
-
-- ``predict_extended()`` - Use ``predict()`` instead
-- ``batch_predict()`` - Use ``predict()`` instead
-- ``predict_sliding_window()`` - Use ``predict()`` instead

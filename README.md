@@ -23,13 +23,15 @@ pangram_client = Pangram(api_key=my_api_key)
 
 ### Make a request
 
-Main prediction method (V3 - AI-assistance detection and segment-level analysis):
+Main prediction method (AI-assistance detection and segment-level analysis):
 ```
 from pangram import Pangram
 pangram_client = Pangram()
 
 result = pangram_client.predict(text)
-# Analysis with AI-assistance detection
+stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+
+# Analysis with AI-assistance detection.
 fraction_ai = result['fraction_ai']
 fraction_ai_assisted = result['fraction_ai_assisted']
 fraction_human = result['fraction_human']
@@ -41,16 +43,8 @@ for window in result['windows']:
     ai_assistance_score = window['ai_assistance_score']
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
-
-Short prediction (scans first ~400 words of text, returns a single AI likelihood prediction):
-```
-from pangram import Pangram
-pangram_client = Pangram()
-
-result = pangram_client.predict_short(text)
-# Score in range [0, 1] where 0 is human-written and 1 is AI-generated.
-score = result['ai_likelihood']
-```
+`predict()` submits to Pangram's async inference API and waits for the result before returning.
+Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text)` to include a `dashboard_link` in the completed result.
 
 ### Building Documentation
 
@@ -59,13 +53,5 @@ Install docs dependencies and build:
 poetry install --with docs
 cd docs && make html
 ```
-
-### Deprecated Methods
-
-The following methods are deprecated and will be removed by April 1st, 2026:
-
-- `predict_extended()` - Use `predict()` instead
-- `batch_predict()` - Use `predict()` instead
-- `predict_sliding_window()` - Use `predict()` instead
 
 Questions? Email [support@pangram.com](mailto:support@pangram.com)!

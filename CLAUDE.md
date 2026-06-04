@@ -13,14 +13,15 @@ This is the official Python SDK for the Pangram Labs API, which provides AI-gene
 poetry install
 ```
 
-**Run tests (requires PANGRAM_API_KEY environment variable):**
+**Run tests:**
 ```bash
 poetry run python -m unittest tests/pangram_test.py
 ```
+Most tests are mocked unit tests. Live plagiarism coverage is skipped unless `PANGRAM_API_KEY` is set.
 
 **Run a single test:**
 ```bash
-poetry run python -m unittest tests/pangram_test.py::TestPredict::test_predict
+poetry run python -m unittest tests.pangram_test.TestPredict.test_predict
 ```
 
 **Build documentation:**
@@ -38,9 +39,9 @@ The SDK is minimal with two main files:
 
 ### API Methods
 
-- `predict(text)` - Main V3 endpoint for AI-assistance detection with segment-level analysis
+- `predict(text)` - Main async inference endpoint for AI-assistance detection with segment-level analysis
 - `check_plagiarism(text)` - Plagiarism detection against online content database
 
 ### API Configuration
 
-API endpoints are defined as constants at the top of `text_classifier.py`. The SDK uses `requests` for HTTP calls and authenticates via `x-api-key` header.
+API endpoints are defined as constants at the top of `text_classifier.py`. The SDK uses `requests` for HTTP calls and authenticates via `x-api-key` header. The main prediction call submits a task and polls until completion.
