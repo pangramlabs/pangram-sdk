@@ -1,4 +1,5 @@
 import unittest
+import requests
 from pangram import Pangram, PangramText
 from pangram.text_classifier import API_ENDPOINT, MIN_POLL_INTERVAL_SECONDS
 import os
@@ -84,6 +85,27 @@ class TestPredict(unittest.TestCase):
         pangram_client = Pangram(api_key="test-key")
         with self.assertRaisesRegex(ValueError, "timeout must be greater than 0"):
             pangram_client.predict("hello", timeout=0)
+
+    def test_predict_wraps_submit_request_errors(self):
+        pangram_client = Pangram(api_key="test-key")
+        with patch(
+            "pangram.text_classifier.requests.post",
+            side_effect=requests.exceptions.Timeout("timed out"),
+        ):
+            with self.assertRaisesRegex(ValueError, "submitting prediction task: timed out"):
+                pangram_client.predict("hello")
+
+    def test_predict_wraps_poll_request_errors(self):
+        pangram_client = Pangram(api_key="test-key")
+        with patch(
+            "pangram.text_classifier.requests.post",
+            return_value=MockResponse(json_data={"task_id": "task-1"}),
+        ), patch(
+            "pangram.text_classifier.requests.get",
+            side_effect=requests.exceptions.ConnectionError("connection dropped"),
+        ):
+            with self.assertRaisesRegex(ValueError, "polling prediction task task-1: connection dropped"):
+                pangram_client.predict("hello", poll_interval=0)
 
     def test_predict_short_forwards_to_predict(self):
         text = "hello!"

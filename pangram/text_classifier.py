@@ -53,12 +53,15 @@ class PangramText:
         return response_json
 
     def _submit_prediction_task(self, text: str, deadline: float, public_dashboard_link: bool) -> str:
-        response = requests.post(
-            f"{API_ENDPOINT}/task",
-            json={"text": text, "public_dashboard_link": public_dashboard_link},
-            headers=self._headers(),
-            timeout=self._request_timeout(deadline),
-        )
+        try:
+            response = requests.post(
+                f"{API_ENDPOINT}/task",
+                json={"text": text, "public_dashboard_link": public_dashboard_link},
+                headers=self._headers(),
+                timeout=self._request_timeout(deadline),
+            )
+        except requests.RequestException as exc:
+            raise ValueError(f"Pangram API request failed while submitting prediction task: {exc}") from exc
         response_json = self._parse_response_json(response)
         if not isinstance(response_json, dict):
             raise ValueError(f"Error returned by API: invalid task response: {response_json}")
@@ -79,11 +82,14 @@ class PangramText:
             if time.monotonic() >= deadline:
                 raise TimeoutError(f"Pangram prediction task {task_id} did not complete within {timeout:.0f}s")
 
-            response = requests.get(
-                f"{API_ENDPOINT}/task/{task_id}",
-                headers=self._headers(),
-                timeout=self._request_timeout(deadline),
-            )
+            try:
+                response = requests.get(
+                    f"{API_ENDPOINT}/task/{task_id}",
+                    headers=self._headers(),
+                    timeout=self._request_timeout(deadline),
+                )
+            except requests.RequestException as exc:
+                raise ValueError(f"Pangram API request failed while polling prediction task {task_id}: {exc}") from exc
             response_json = self._parse_response_json(response)
             if not isinstance(response_json, dict):
                 raise ValueError(f"Error returned by API: invalid task result: {response_json}")
