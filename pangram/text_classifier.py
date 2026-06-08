@@ -16,6 +16,7 @@ DEFAULT_BULK_TIMEOUT_SECONDS = 3600
 DEFAULT_POLL_INTERVAL_SECONDS = 0.5
 MIN_POLL_INTERVAL_SECONDS = 0.1
 HTTP_REQUEST_TIMEOUT_SECONDS = 10
+MAX_BULK_PAGE_LIMIT = 1000
 
 class PangramText:
     def __init__(self, api_key: Optional[str] = None) -> None:
@@ -150,9 +151,9 @@ class PangramText:
             raise ValueError(f"Error returned by API: invalid bulk items response: {response_json}")
         return response_json
 
-    def get_bulk_results(self, bulk_id: str, offset: int = 0, limit: int = 100) -> Dict:
+    def get_bulk_results_page(self, bulk_id: str, offset: int = 0, limit: int = 100) -> Dict:
         """
-        Fetch paginated results for a Bulk API job.
+        Fetch one page of results for a Bulk API job.
 
         Completed successful items include a ``result`` field with the same
         response shape returned by :meth:`predict`. Items that are still running
@@ -182,6 +183,60 @@ class PangramText:
         if not isinstance(response_json, dict):
             raise ValueError(f"Error returned by API: invalid bulk results response: {response_json}")
         return response_json
+
+    def get_bulk_results(self, bulk_id: str, page_size: int = MAX_BULK_PAGE_LIMIT) -> Dict:
+        """
+        Fetch all available results for a Bulk API job.
+
+        This helper follows the paginated ``/bulk/{bulk_id}/results`` endpoint
+        until every submitted item index has been covered. Failed items are
+        returned separately in ``failed_items``. If the job is still running,
+        unfinished accepted items are included in ``items`` with ``result`` set
+        to ``None``.
+
+        :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
+        :type bulk_id: str
+        :param page_size: Number of submitted item slots to request per API call.
+                          The API allows up to 1000.
+        :type page_size: int
+        :return: Aggregated bulk result response containing ``bulk_id``,
+                 ``total_items``, ``items``, and ``failed_items``.
+        :rtype: Dict
+        :raises ValueError: If page_size is invalid, or if the API returns an
+                            error or invalid response.
+        """
+        if page_size < 1 or page_size > MAX_BULK_PAGE_LIMIT:
+            raise ValueError(f"page_size must be between 1 and {MAX_BULK_PAGE_LIMIT}")
+
+        offset = 0
+        total_items = None
+        items = []
+        failed_items = []
+        response_bulk_id = bulk_id
+
+        while total_items is None or offset < total_items:
+            page = self.get_bulk_results_page(bulk_id, offset=offset, limit=page_size)
+            response_bulk_id = page.get("bulk_id", response_bulk_id)
+            page_total = page.get("total_items")
+            if not isinstance(page_total, int):
+                raise ValueError(f"Error returned by API: invalid bulk results total_items: {page}")
+            total_items = page_total
+
+            page_items = page.get("items")
+            page_failed_items = page.get("failed_items")
+            if not isinstance(page_items, list) or not isinstance(page_failed_items, list):
+                raise ValueError(f"Error returned by API: invalid bulk results page: {page}")
+
+            items.extend(page_items)
+            failed_items.extend(page_failed_items)
+            offset += page_size
+
+        return {
+            "bulk_id": response_bulk_id,
+            "total_items": total_items or 0,
+            "items": items,
+            "failed_items": failed_items,
+        }
 
     def wait_for_bulk(
         self,

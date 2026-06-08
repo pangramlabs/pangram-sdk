@@ -234,7 +234,7 @@ class TestBulkAPI(unittest.TestCase):
         self.assertEqual(mock_get.call_args.kwargs["headers"]["x-api-key"], "test-key")
         self.assertEqual(result, status_response)
 
-    def test_get_bulk_items_and_results_use_pagination_params(self):
+    def test_get_bulk_items_and_results_page_use_pagination_params(self):
         pangram_client = Pangram(api_key="test-key")
         items_response = {
             "bulk_id": "blk_123",
@@ -260,7 +260,7 @@ class TestBulkAPI(unittest.TestCase):
             ],
         ) as mock_get:
             items = pangram_client.get_bulk_items("blk_123", offset=10, limit=25)
-            results = pangram_client.get_bulk_results("blk_123", offset=10, limit=25)
+            results = pangram_client.get_bulk_results_page("blk_123", offset=10, limit=25)
 
         self.assertEqual(mock_get.call_args_list[0].args[0], f"{API_ENDPOINT}/bulk/blk_123/items")
         self.assertEqual(mock_get.call_args_list[0].kwargs["params"], {"offset": 10, "limit": 25})
@@ -268,6 +268,50 @@ class TestBulkAPI(unittest.TestCase):
         self.assertEqual(mock_get.call_args_list[1].kwargs["params"], {"offset": 10, "limit": 25})
         self.assertEqual(items, items_response)
         self.assertEqual(results, results_response)
+
+    def test_get_bulk_results_fetches_all_pages(self):
+        pangram_client = Pangram(api_key="test-key")
+        first_page = {
+            "bulk_id": "blk_123",
+            "offset": 0,
+            "limit": 2,
+            "total_items": 3,
+            "items": [
+                {"index": 0, "id": "row-1", "task_id": "task-1", "stage": "STAGE_SUCCESS", "result": {}},
+            ],
+            "failed_items": [
+                {"index": 1, "id": "row-2", "task_id": None, "stage": "STAGE_FAILED", "error": "invalid text"},
+            ],
+        }
+        second_page = {
+            "bulk_id": "blk_123",
+            "offset": 2,
+            "limit": 2,
+            "total_items": 3,
+            "items": [
+                {"index": 2, "id": "row-3", "task_id": "task-3", "stage": "STAGE_SUCCESS", "result": {}},
+            ],
+            "failed_items": [],
+        }
+
+        with patch.object(
+            PangramText,
+            "get_bulk_results_page",
+            side_effect=[first_page, second_page],
+        ) as mock_page:
+            results = pangram_client.get_bulk_results("blk_123", page_size=2)
+
+        self.assertEqual(mock_page.call_args_list[0].kwargs, {"offset": 0, "limit": 2})
+        self.assertEqual(mock_page.call_args_list[1].kwargs, {"offset": 2, "limit": 2})
+        self.assertEqual(results["bulk_id"], "blk_123")
+        self.assertEqual(results["total_items"], 3)
+        self.assertEqual([item["index"] for item in results["items"]], [0, 2])
+        self.assertEqual([item["index"] for item in results["failed_items"]], [1])
+
+    def test_get_bulk_results_rejects_invalid_page_size(self):
+        pangram_client = Pangram(api_key="test-key")
+        with self.assertRaisesRegex(ValueError, "page_size must be between"):
+            pangram_client.get_bulk_results("blk_123", page_size=0)
 
     def test_wait_for_bulk_returns_terminal_status(self):
         pangram_client = Pangram(api_key="test-key")

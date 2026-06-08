@@ -65,7 +65,7 @@ bulk = pangram_client.submit_bulk(items=[
 
 bulk_id = bulk["bulk_id"]
 status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
-results = pangram_client.get_bulk_results(bulk_id, limit=100)
+results = pangram_client.get_bulk_results(bulk_id)
 
 for item in results["items"]:
     if item["result"] is not None:
@@ -80,7 +80,7 @@ Bulk jobs can also be inspected without waiting:
 ```
 status = pangram_client.get_bulk_status(bulk_id)
 items = pangram_client.get_bulk_items(bulk_id, offset=0, limit=100)
-results = pangram_client.get_bulk_results(bulk_id, offset=0, limit=100)
+results_page = pangram_client.get_bulk_results_page(bulk_id, offset=0, limit=100)
 ```
 
 ### Building Documentation
