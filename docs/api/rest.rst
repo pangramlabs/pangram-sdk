@@ -153,6 +153,15 @@ The Bulk API accepts many texts, queues them as asynchronous AI detection work,
 and returns a bulk job ID. Poll the bulk status endpoint until the status is
 ``succeeded``, ``failed``, or ``partial``.
 
+Bulk metadata and results are retained for 48 hours after the job reaches a
+terminal status. ``created_at`` and ``completed_at`` are returned as Unix epoch
+seconds encoded as strings, such as ``"1760000000.0"``.
+
+The launch bulk limit is 1,000 billable units per request. A billable unit is
+one started 1,000-word block per valid item, with a minimum of one unit per
+item. There is no separate item-count limit, but normal request-body limits
+still apply.
+
 .. http:post:: https://text.external-api.pangram.com/bulk
 
   :<json array text: A list of input texts. Provide either ``text`` or ``items``.
@@ -206,8 +215,8 @@ and returns a bulk job ID. Poll the bulk status endpoint until the status is
   :>json int accepted: Number of items accepted for processing.
   :>json int succeeded: Number of items that completed successfully.
   :>json int failed: Number of items that failed.
-  :>json string created_at: Job creation timestamp.
-  :>json string completed_at: Job completion timestamp, or null while non-terminal.
+  :>json string created_at: Job creation timestamp as Unix epoch seconds encoded as a string.
+  :>json string completed_at: Job completion timestamp as Unix epoch seconds encoded as a string, or null while non-terminal.
 
   **Example Response**
 

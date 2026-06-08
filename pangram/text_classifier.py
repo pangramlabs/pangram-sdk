@@ -96,6 +96,17 @@ class PangramText:
             raise ValueError(f"Error returned by API: invalid bulk response: {response_json}")
         return response_json
 
+    def _fetch_bulk_status(self, bulk_id: str, request_timeout: float) -> Dict:
+        response = requests.get(
+            f"{API_ENDPOINT}/bulk/{bulk_id}",
+            headers=self._headers(),
+            timeout=request_timeout,
+        )
+        response_json = self._parse_response_json(response)
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Error returned by API: invalid bulk status response: {response_json}")
+        return response_json
+
     def get_bulk_status(self, bulk_id: str) -> Dict:
         """
         Fetch the current status for a Bulk API job.
@@ -107,17 +118,9 @@ class PangramText:
         :raises ValueError: If the API returns an error or an invalid response.
         """
         try:
-            response = requests.get(
-                f"{API_ENDPOINT}/bulk/{bulk_id}",
-                headers=self._headers(),
-                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
-            )
+            return self._fetch_bulk_status(bulk_id, HTTP_REQUEST_TIMEOUT_SECONDS)
         except requests.RequestException as exc:
             raise ValueError(f"Pangram API request failed while fetching bulk status: {exc}") from exc
-        response_json = self._parse_response_json(response)
-        if not isinstance(response_json, dict):
-            raise ValueError(f"Error returned by API: invalid bulk status response: {response_json}")
-        return response_json
 
     def get_bulk_items(self, bulk_id: str, offset: int = 0, limit: int = 100) -> Dict:
         """
@@ -219,7 +222,21 @@ class PangramText:
                     f"Pangram bulk job {bulk_id} did not complete within {timeout:.0f}s; last status={last_status}"
                 )
 
-            status_response = self.get_bulk_status(bulk_id)
+            try:
+                status_response = self._fetch_bulk_status(
+                    bulk_id,
+                    self._request_timeout(deadline),
+                )
+            except requests.RequestException as exc:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Pangram bulk job {bulk_id} did not complete within {timeout:.0f}s; last status={last_status}"
+                    ) from exc
+                sleep_for = min(effective_poll_interval, max(0.0, deadline - time.monotonic()))
+                if sleep_for > 0:
+                    time.sleep(sleep_for)
+                continue
+
             last_status = status_response.get("status")
             if last_status in BULK_TERMINAL_STATUSES:
                 return status_response

@@ -273,7 +273,7 @@ class TestBulkAPI(unittest.TestCase):
         pangram_client = Pangram(api_key="test-key")
         with patch.object(
             PangramText,
-            "get_bulk_status",
+            "_fetch_bulk_status",
             side_effect=[
                 {"bulk_id": "blk_123", "status": "queued"},
                 {"bulk_id": "blk_123", "status": "running"},
@@ -286,6 +286,44 @@ class TestBulkAPI(unittest.TestCase):
         self.assertEqual(mock_status.call_count, 3)
         self.assertEqual(mock_sleep.call_count, 2)
         mock_sleep.assert_called_with(MIN_POLL_INTERVAL_SECONDS)
+
+    def test_wait_for_bulk_uses_remaining_deadline_for_poll_request_timeout(self):
+        pangram_client = Pangram(api_key="test-key")
+        terminal_response = {
+            "bulk_id": "blk_123",
+            "status": "succeeded",
+            "total_items": 1,
+            "accepted": 1,
+            "succeeded": 1,
+            "failed": 0,
+            "created_at": "1760000000.0",
+            "completed_at": "1760000001.0",
+        }
+
+        with patch(
+            "pangram.text_classifier.requests.get",
+            return_value=MockResponse(json_data=terminal_response),
+        ) as mock_get:
+            result = pangram_client.wait_for_bulk("blk_123", timeout=1, poll_interval=0)
+
+        self.assertEqual(result["status"], "succeeded")
+        self.assertLessEqual(mock_get.call_args.kwargs["timeout"], 1.0)
+
+    def test_wait_for_bulk_retries_poll_request_errors_before_deadline(self):
+        pangram_client = Pangram(api_key="test-key")
+        with patch.object(
+            PangramText,
+            "_fetch_bulk_status",
+            side_effect=[
+                requests.exceptions.ConnectionError("connection dropped"),
+                {"bulk_id": "blk_123", "status": "succeeded"},
+            ],
+        ) as mock_status, patch("pangram.text_classifier.time.sleep") as mock_sleep:
+            result = pangram_client.wait_for_bulk("blk_123", timeout=10, poll_interval=0)
+
+        self.assertEqual(result["status"], "succeeded")
+        self.assertEqual(mock_status.call_count, 2)
+        mock_sleep.assert_called_once_with(MIN_POLL_INTERVAL_SECONDS)
 
     def test_wait_for_bulk_rejects_invalid_timeout(self):
         pangram_client = Pangram(api_key="test-key")
