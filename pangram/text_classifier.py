@@ -2,15 +2,17 @@ import requests
 import os
 import time
 import warnings
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
-SOURCE_VERSION = "python_sdk_0.2.0"
+SOURCE_VERSION = "python_sdk_0.3.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 ASYNC_SUCCESS_STAGE = 'STAGE_SUCCESS'
 ASYNC_FAILED_STAGE = 'STAGE_FAILED'
+BULK_TERMINAL_STATUSES = {'succeeded', 'failed', 'partial'}
 DEFAULT_PREDICT_TIMEOUT_SECONDS = 300
+DEFAULT_BULK_TIMEOUT_SECONDS = 3600
 DEFAULT_POLL_INTERVAL_SECONDS = 0.5
 MIN_POLL_INTERVAL_SECONDS = 0.1
 HTTP_REQUEST_TIMEOUT_SECONDS = 10
@@ -41,8 +43,8 @@ class PangramText:
         remaining = deadline - time.monotonic()
         return max(0.1, min(HTTP_REQUEST_TIMEOUT_SECONDS, remaining))
 
-    def _parse_response_json(self, response: requests.Response):
-        if response.status_code != 200:
+    def _parse_response_json(self, response: requests.Response, expected_status_codes: Tuple[int, ...] = (200,)):
+        if response.status_code not in expected_status_codes:
             raise ValueError(f"Error returned by API: [{response.status_code}] {response.text}")
         try:
             response_json = response.json()
@@ -51,6 +53,180 @@ class PangramText:
         if isinstance(response_json, dict) and "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
+
+    def submit_bulk(
+        self,
+        text: Optional[List[str]] = None,
+        items: Optional[List[Dict[str, str]]] = None,
+    ) -> Dict:
+        """
+        Submit a Bulk API job for asynchronous AI detection.
+
+        Provide either ``text`` as a list of input strings or ``items`` as a
+        list of dictionaries with ``text`` and an optional customer-defined
+        ``id``. The response includes a ``bulk_id`` for polling and immediate
+        per-item validation failures, if any.
+
+        :param text: A list of input texts to analyze.
+        :type text: List[str], optional
+        :param items: A list of item dictionaries. Each item must include
+                      ``text`` and may include ``id``.
+        :type items: List[Dict[str, str]], optional
+        :return: Bulk submission response containing ``bulk_id``, ``status``,
+                 ``total_items``, ``accepted_items``, and ``failed_items``.
+        :rtype: Dict
+        :raises ValueError: If both or neither payload shapes are provided, or
+                            if the API returns an error.
+        """
+        if (text is None and items is None) or (text is not None and items is not None):
+            raise ValueError("Provide exactly one of text or items")
+
+        payload = {"items": items} if items is not None else {"text": text}
+        try:
+            response = requests.post(
+                f"{API_ENDPOINT}/bulk",
+                json=payload,
+                headers=self._headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
+        except requests.RequestException as exc:
+            raise ValueError(f"Pangram API request failed while submitting bulk job: {exc}") from exc
+        response_json = self._parse_response_json(response, expected_status_codes=(202,))
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Error returned by API: invalid bulk response: {response_json}")
+        return response_json
+
+    def get_bulk_status(self, bulk_id: str) -> Dict:
+        """
+        Fetch the current status for a Bulk API job.
+
+        :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
+        :type bulk_id: str
+        :return: Bulk status response containing counters and timestamps.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or an invalid response.
+        """
+        try:
+            response = requests.get(
+                f"{API_ENDPOINT}/bulk/{bulk_id}",
+                headers=self._headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
+        except requests.RequestException as exc:
+            raise ValueError(f"Pangram API request failed while fetching bulk status: {exc}") from exc
+        response_json = self._parse_response_json(response)
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Error returned by API: invalid bulk status response: {response_json}")
+        return response_json
+
+    def get_bulk_items(self, bulk_id: str, offset: int = 0, limit: int = 100) -> Dict:
+        """
+        Fetch paginated item metadata for a Bulk API job.
+
+        :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
+        :type bulk_id: str
+        :param offset: Zero-based item offset. Defaults to 0.
+        :type offset: int
+        :param limit: Maximum number of items to return. The API allows up to 1000.
+        :type limit: int
+        :return: Paginated bulk item metadata.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or an invalid response.
+        """
+        try:
+            response = requests.get(
+                f"{API_ENDPOINT}/bulk/{bulk_id}/items",
+                params={"offset": offset, "limit": limit},
+                headers=self._headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
+        except requests.RequestException as exc:
+            raise ValueError(f"Pangram API request failed while fetching bulk items: {exc}") from exc
+        response_json = self._parse_response_json(response)
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Error returned by API: invalid bulk items response: {response_json}")
+        return response_json
+
+    def get_bulk_results(self, bulk_id: str, offset: int = 0, limit: int = 100) -> Dict:
+        """
+        Fetch paginated results for a Bulk API job.
+
+        Completed successful items include a ``result`` field with the same
+        response shape returned by :meth:`predict`. Items that are still running
+        have ``result`` set to ``None``. Failed items are returned separately in
+        ``failed_items``.
+
+        :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
+        :type bulk_id: str
+        :param offset: Zero-based item offset. Defaults to 0.
+        :type offset: int
+        :param limit: Maximum number of items to return. The API allows up to 1000.
+        :type limit: int
+        :return: Paginated bulk result response.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or an invalid response.
+        """
+        try:
+            response = requests.get(
+                f"{API_ENDPOINT}/bulk/{bulk_id}/results",
+                params={"offset": offset, "limit": limit},
+                headers=self._headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
+        except requests.RequestException as exc:
+            raise ValueError(f"Pangram API request failed while fetching bulk results: {exc}") from exc
+        response_json = self._parse_response_json(response)
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Error returned by API: invalid bulk results response: {response_json}")
+        return response_json
+
+    def wait_for_bulk(
+        self,
+        bulk_id: str,
+        timeout: float = DEFAULT_BULK_TIMEOUT_SECONDS,
+        poll_interval: float = DEFAULT_POLL_INTERVAL_SECONDS,
+    ) -> Dict:
+        """
+        Poll a Bulk API job until it reaches a terminal status.
+
+        Terminal statuses are ``succeeded``, ``failed``, and ``partial``.
+
+        :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
+        :type bulk_id: str
+        :param timeout: Maximum seconds to wait for terminal completion.
+        :type timeout: float
+        :param poll_interval: Seconds to wait between polling attempts. Values
+                              below 0.1 are clamped to 0.1.
+        :type poll_interval: float
+        :return: Terminal bulk status response.
+        :rtype: Dict
+        :raises ValueError: If timeout or poll interval values are invalid, or
+                            if the API returns an error.
+        :raises TimeoutError: If the bulk job does not complete before timeout.
+        """
+        if timeout <= 0:
+            raise ValueError("timeout must be greater than 0")
+        if poll_interval < 0:
+            raise ValueError("poll_interval cannot be negative")
+
+        deadline = time.monotonic() + timeout
+        effective_poll_interval = max(MIN_POLL_INTERVAL_SECONDS, poll_interval)
+        last_status = None
+
+        while True:
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    f"Pangram bulk job {bulk_id} did not complete within {timeout:.0f}s; last status={last_status}"
+                )
+
+            status_response = self.get_bulk_status(bulk_id)
+            last_status = status_response.get("status")
+            if last_status in BULK_TERMINAL_STATUSES:
+                return status_response
+
+            sleep_for = min(effective_poll_interval, max(0.0, deadline - time.monotonic()))
+            if sleep_for > 0:
+                time.sleep(sleep_for)
 
     def _submit_prediction_task(self, text: str, deadline: float, public_dashboard_link: bool) -> str:
         try:
@@ -209,8 +385,9 @@ class PangramText:
 
         .. deprecated::
            This compatibility method forwards to :meth:`predict` once per
-           input text. Use :meth:`predict` directly. This method may be
-           removed on August 1, 2026.
+           input text. Use :meth:`submit_bulk` for asynchronous bulk jobs or
+           :meth:`predict` for one-off calls. This method may be removed on
+           August 1, 2026.
 
         :param text_batch: A list of strings to be classified.
         :type text_batch: List[str]
@@ -220,7 +397,8 @@ class PangramText:
         """
         warnings.warn(
             "batch_predict() is deprecated and forwards to predict() once per input text. "
-            "Use predict() directly. This method may be removed on August 1, 2026.",
+            "Use submit_bulk() for asynchronous bulk jobs or predict() for one-off calls. "
+            "This method may be removed on August 1, 2026.",
             DeprecationWarning,
             stacklevel=2,
         )

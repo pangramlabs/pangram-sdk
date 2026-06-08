@@ -56,6 +56,42 @@ The SDK submits to Pangram's async inference API and waits for the completed res
         ai_assistance_score = window['ai_assistance_score']
         confidence = window['confidence']
 
+Submit a Bulk API job
+~~~~~~~~~~~~~~~~~~~~~
+Use the Bulk API for asynchronous AI detection across many inputs. Submit either
+a ``text`` list or an ``items`` list. ``items`` can include customer-defined
+``id`` values that are returned with item status and results.
+
+.. code:: python
+
+    from pangram import Pangram
+
+    pangram_client = Pangram()
+
+    bulk = pangram_client.submit_bulk(items=[
+        {"id": "row-001", "text": "First text to analyze"},
+        {"id": "row-002", "text": "Second text to analyze"},
+    ])
+
+    bulk_id = bulk["bulk_id"]
+    status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
+    results = pangram_client.get_bulk_results(bulk_id, limit=100)
+
+    for item in results["items"]:
+        if item["result"] is not None:
+            print(item["id"], item["result"]["prediction_short"])
+
+    for failed in results["failed_items"]:
+        print(failed["id"], failed["error"])
+
+You can also inspect jobs without waiting:
+
+.. code:: python
+
+    status = pangram_client.get_bulk_status(bulk_id)
+    items = pangram_client.get_bulk_items(bulk_id, offset=0, limit=100)
+    results = pangram_client.get_bulk_results(bulk_id, offset=0, limit=100)
+
 Check for Plagiarism
 ~~~~~~~~~~~~~~~~~~~~~
 
