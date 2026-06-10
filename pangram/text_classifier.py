@@ -481,7 +481,12 @@ class PangramText:
         return results
 
 
-    def predict_with_dashboard_link(self, text: str):
+    def predict_with_dashboard_link(
+        self,
+        text: str,
+        timeout: float = DEFAULT_PREDICT_TIMEOUT_SECONDS,
+        poll_interval: float = DEFAULT_POLL_INTERVAL_SECONDS,
+    ) -> Dict:
         """
         Classify text as AI-, AI-assisted, or human-written.
 
@@ -490,6 +495,10 @@ class PangramText:
 
         :param text: The text to be classified.
         :type text: str
+        :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
+        :type timeout: float
+        :param poll_interval: Seconds to wait between polling attempts. Values below 0.1 are clamped to 0.1. Defaults to 0.5.
+        :type poll_interval: float
         :return: The classification result from the API, as a dict with the following fields:
 
                 - text (string): The classified text.
@@ -502,8 +511,15 @@ class PangramText:
                 - fraction_human (float): Fraction of text classified as human-written (0.0-1.0).
                 - windows (list): List of text windows and their classifications.
         :rtype: dict
+        :raises ValueError: If the API returns an error or if the response is invalid
+        :raises TimeoutError: If the async task does not complete before timeout
         """
-        return self.predict(text, public_dashboard_link=True)
+        return self.predict(
+            text,
+            public_dashboard_link=True,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     def check_plagiarism(self, text: str) -> Dict:
         """

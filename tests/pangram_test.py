@@ -390,12 +390,17 @@ class TestDashboard(unittest.TestCase):
             return_value=MockResponse(json_data={"task_id": "task-1"}),
         ) as mock_post, patch(
             "pangram.text_classifier.requests.get",
-            return_value=MockResponse(json_data=success_response),
-        ):
-            result = pangram_client.predict_with_dashboard_link(text)
+            side_effect=[
+                MockResponse(json_data={"task_id": "task-1", "stage": "STAGE_PREPROCESSING"}),
+                MockResponse(json_data=success_response),
+            ],
+        ), patch("pangram.text_classifier.time.sleep") as mock_sleep:
+            result = pangram_client.predict_with_dashboard_link(text, timeout=1, poll_interval=0)
 
         self.assertEqual(mock_post.call_args.args[0], f"{API_ENDPOINT}/task")
         self.assertEqual(mock_post.call_args.kwargs["json"], {"text": text, "public_dashboard_link": True})
+        self.assertLessEqual(mock_post.call_args.kwargs["timeout"], 1.0)
+        mock_sleep.assert_called_once_with(MIN_POLL_INTERVAL_SECONDS)
         self.assertEqual(result, success_response)
 
 class TestPlagiarism(unittest.TestCase):

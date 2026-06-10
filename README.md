@@ -44,7 +44,7 @@ for window in result['windows']:
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
 `predict()` submits to Pangram's async inference API and waits for the result before returning.
-Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text)` to include a `dashboard_link` in the completed result.
+Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text, timeout=300, poll_interval=0.5)` to include a `dashboard_link` in the completed result.
 
 ### Submit a Bulk API job
 
@@ -81,6 +81,25 @@ Bulk jobs can also be inspected without waiting:
 status = pangram_client.get_bulk_status(bulk_id)
 items = pangram_client.get_bulk_items(bulk_id, offset=0, limit=100)
 results_page = pangram_client.get_bulk_results_page(bulk_id, offset=0, limit=100)
+```
+
+For large jobs, use `get_bulk_results_page()` in a loop instead of `get_bulk_results()`
+to process one page at a time without holding the full result set in memory:
+
+```
+offset = 0
+limit = 1000
+
+while True:
+    page = pangram_client.get_bulk_results_page(bulk_id, offset=offset, limit=limit)
+    for item in page["items"]:
+        process(item)
+    for failed in page["failed_items"]:
+        handle_failure(failed)
+
+    offset += limit
+    if offset >= page["total_items"]:
+        break
 ```
 
 ### Building Documentation

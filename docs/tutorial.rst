@@ -92,6 +92,26 @@ You can also inspect jobs without waiting:
     items = pangram_client.get_bulk_items(bulk_id, offset=0, limit=100)
     results_page = pangram_client.get_bulk_results_page(bulk_id, offset=0, limit=100)
 
+For large jobs, use ``get_bulk_results_page()`` in a loop instead of
+``get_bulk_results()`` to process one page at a time without holding the full
+result set in memory:
+
+.. code:: python
+
+    offset = 0
+    limit = 1000
+
+    while True:
+        page = pangram_client.get_bulk_results_page(bulk_id, offset=offset, limit=limit)
+        for item in page["items"]:
+            process(item)
+        for failed in page["failed_items"]:
+            handle_failure(failed)
+
+        offset += limit
+        if offset >= page["total_items"]:
+            break
+
 Check for Plagiarism
 ~~~~~~~~~~~~~~~~~~~~~
 
