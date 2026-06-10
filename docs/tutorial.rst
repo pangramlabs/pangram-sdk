@@ -62,6 +62,10 @@ Use the Bulk API for asynchronous AI detection across many inputs. Submit either
 a ``text`` list or an ``items`` list. ``items`` can include customer-defined
 ``id`` values that are returned with item status and results.
 
+Bulk jobs are processed asynchronously. Completion time depends on the number
+and length of submitted items and current system load. Use
+``get_bulk_status()`` or ``wait_for_bulk()`` to monitor progress.
+
 .. code:: python
 
     from pangram import Pangram

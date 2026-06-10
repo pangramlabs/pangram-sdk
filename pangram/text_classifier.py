@@ -248,6 +248,8 @@ class PangramText:
         Poll a Bulk API job until it reaches a terminal status.
 
         Terminal statuses are ``succeeded``, ``failed``, and ``partial``.
+        Completion time depends on the number and length of submitted items and
+        current system load.
 
         :param bulk_id: The bulk job ID returned by :meth:`submit_bulk`.
         :type bulk_id: str

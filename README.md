@@ -53,6 +53,10 @@ Submit either a list of strings with `text` or a list of objects with `items`.
 Item `id` values are optional customer IDs that are returned with item status
 and results.
 
+Bulk jobs are processed asynchronously. Completion time depends on the number
+and length of submitted items and current system load. Use `get_bulk_status()`
+or `wait_for_bulk()` to monitor progress.
+
 ```
 from pangram import Pangram
 

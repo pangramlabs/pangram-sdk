@@ -153,6 +153,9 @@ The Bulk API accepts many texts, queues them as asynchronous AI detection work,
 and returns a bulk job ID. Poll the bulk status endpoint until the status is
 ``succeeded``, ``failed``, or ``partial``.
 
+Completion time depends on the number and length of submitted items and current
+system load. Use the bulk status endpoint to monitor progress.
+
 Bulk metadata and results are retained for 48 hours after the job reaches a
 terminal status. ``created_at`` and ``completed_at`` are returned as Unix epoch
 seconds encoded as strings, such as ``"1760000000.0"``.
