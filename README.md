@@ -44,7 +44,67 @@ for window in result['windows']:
     confidence = window['confidence']  # "High", "Medium", "Low"
 ```
 `predict()` submits to Pangram's async inference API and waits for the result before returning.
-Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text)` to include a `dashboard_link` in the completed result.
+Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text, timeout=300, poll_interval=0.5)` to include a `dashboard_link` in the completed result.
+
+### Submit a Bulk API job
+
+Use the Bulk API for asynchronous AI detection across many inputs.
+Submit either a list of strings with `text` or a list of objects with `items`.
+Item `id` values are optional customer IDs that are returned with item status
+and results.
+
+Bulk jobs are processed asynchronously. Completion time depends on the number
+and length of submitted items and current system load. Use `get_bulk_status()`
+or `wait_for_bulk()` to monitor progress.
+
+```
+from pangram import Pangram
+
+pangram_client = Pangram()
+
+bulk = pangram_client.submit_bulk(items=[
+    {"id": "row-001", "text": "First text to analyze"},
+    {"id": "row-002", "text": "Second text to analyze"},
+])
+
+bulk_id = bulk["bulk_id"]
+status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
+results = pangram_client.get_bulk_results(bulk_id)
+
+for item in results["items"]:
+    if item["result"] is not None:
+        print(item["id"], item["result"]["prediction_short"])
+
+for failed in results["failed_items"]:
+    print(failed["id"], failed["error"])
+```
+
+Bulk jobs can also be inspected without waiting:
+
+```
+status = pangram_client.get_bulk_status(bulk_id)
+items = pangram_client.get_bulk_items(bulk_id, offset=0, limit=100)
+results_page = pangram_client.get_bulk_results_page(bulk_id, offset=0, limit=100)
+```
+
+For large jobs, use `get_bulk_results_page()` in a loop instead of `get_bulk_results()`
+to process one page at a time without holding the full result set in memory:
+
+```
+offset = 0
+limit = 1000
+
+while True:
+    page = pangram_client.get_bulk_results_page(bulk_id, offset=offset, limit=limit)
+    for item in page["items"]:
+        process(item)
+    for failed in page["failed_items"]:
+        handle_failure(failed)
+
+    offset += limit
+    if offset >= page["total_items"]:
+        break
+```
 
 ### Building Documentation
 
