@@ -1,8 +1,9 @@
 import unittest
 import requests
 from pangram import Pangram, PangramText
-from pangram.text_classifier import API_ENDPOINT, MIN_POLL_INTERVAL_SECONDS
+from pangram.text_classifier import API_ENDPOINT, FILE_UPLOAD_API_ENDPOINT, MIN_POLL_INTERVAL_SECONDS
 import os
+import tempfile
 from unittest.mock import patch
 
 
@@ -402,6 +403,98 @@ class TestDashboard(unittest.TestCase):
         self.assertLessEqual(mock_post.call_args.kwargs["timeout"], 1.0)
         mock_sleep.assert_called_once_with(MIN_POLL_INTERVAL_SECONDS)
         self.assertEqual(result, success_response)
+
+class TestFileUpload(unittest.TestCase):
+    def _write_test_file(self, directory, name):
+        path = os.path.join(directory, name)
+        with open(path, "wb") as file_obj:
+            file_obj.write(b"test file contents")
+        return path
+
+    def test_predict_file_uploads_multipart_file(self):
+        pangram_client = Pangram(api_key="test-key")
+        upload_response = [
+            {"dashboard_link": "https://www.pangram.com/history/query-1"}
+        ]
+
+        with tempfile.TemporaryDirectory() as directory:
+            file_path = self._write_test_file(directory, "document.docx")
+            with patch(
+                "pangram.text_classifier.requests.post",
+                return_value=MockResponse(json_data=upload_response),
+            ) as mock_post:
+                result = pangram_client.predict_file(
+                    file_path,
+                    public_dashboard_link=True,
+                    timeout=12,
+                )
+
+        self.assertEqual(mock_post.call_args.args[0], FILE_UPLOAD_API_ENDPOINT)
+        self.assertEqual(mock_post.call_args.kwargs["data"], {"public_dashboard_link": "true"})
+        self.assertEqual(mock_post.call_args.kwargs["headers"], {"x-api-key": "test-key"})
+        self.assertEqual(mock_post.call_args.kwargs["timeout"], 12)
+        files = mock_post.call_args.kwargs["files"]
+        self.assertEqual(len(files), 1)
+        self.assertEqual(files[0][0], "files")
+        self.assertEqual(files[0][1][0], "document.docx")
+        self.assertTrue(files[0][1][1].closed)
+        self.assertEqual(result, upload_response[0])
+
+    def test_predict_files_repeats_files_form_field(self):
+        pangram_client = Pangram(api_key="test-key")
+        upload_response = [
+            {"dashboard_link": "https://www.pangram.com/history/query-1"},
+            {"dashboard_link": "https://www.pangram.com/history/query-2"},
+        ]
+
+        with tempfile.TemporaryDirectory() as directory:
+            first_path = self._write_test_file(directory, "first.pdf")
+            second_path = self._write_test_file(directory, "second.rtf")
+            with patch(
+                "pangram.text_classifier.requests.post",
+                return_value=MockResponse(json_data=upload_response),
+            ) as mock_post:
+                result = pangram_client.predict_files([first_path, second_path])
+
+        self.assertEqual(mock_post.call_args.kwargs["data"], {"public_dashboard_link": "false"})
+        files = mock_post.call_args.kwargs["files"]
+        self.assertEqual([file_item[0] for file_item in files], ["files", "files"])
+        self.assertEqual([file_item[1][0] for file_item in files], ["first.pdf", "second.rtf"])
+        self.assertEqual(result, upload_response)
+
+    def test_predict_files_requires_at_least_one_file(self):
+        pangram_client = Pangram(api_key="test-key")
+        with self.assertRaisesRegex(ValueError, "at least one file"):
+            pangram_client.predict_files([])
+
+    def test_predict_files_rejects_invalid_timeout(self):
+        pangram_client = Pangram(api_key="test-key")
+        with tempfile.TemporaryDirectory() as directory:
+            file_path = self._write_test_file(directory, "document.docx")
+            with self.assertRaisesRegex(ValueError, "timeout must be greater than 0"):
+                pangram_client.predict_file(file_path, timeout=0)
+
+    def test_predict_files_wraps_request_errors(self):
+        pangram_client = Pangram(api_key="test-key")
+        with tempfile.TemporaryDirectory() as directory:
+            file_path = self._write_test_file(directory, "document.docx")
+            with patch(
+                "pangram.text_classifier.requests.post",
+                side_effect=requests.exceptions.Timeout("timed out"),
+            ):
+                with self.assertRaisesRegex(ValueError, "uploading files: timed out"):
+                    pangram_client.predict_file(file_path)
+
+    def test_predict_files_rejects_invalid_response_shape(self):
+        pangram_client = Pangram(api_key="test-key")
+        with tempfile.TemporaryDirectory() as directory:
+            file_path = self._write_test_file(directory, "document.docx")
+            with patch(
+                "pangram.text_classifier.requests.post",
+                return_value=MockResponse(json_data={"unexpected": "shape"}),
+            ):
+                with self.assertRaisesRegex(ValueError, "invalid file upload response"):
+                    pangram_client.predict_file(file_path)
 
 class TestPlagiarism(unittest.TestCase):
     @unittest.skipUnless(os.getenv('PANGRAM_API_KEY'), "requires PANGRAM_API_KEY")

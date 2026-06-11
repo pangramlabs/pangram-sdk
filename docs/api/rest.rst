@@ -312,6 +312,110 @@ still apply.
       "failed_items": []
     }
 
+File Upload API
+===============
+
+The File Upload API accepts one or more files as ``multipart/form-data`` and
+returns one result object per uploaded file. Use this endpoint when you want
+Pangram to extract text from ``.docx``, ``.pdf``, or ``.rtf`` documents and
+create AI detection results. Each result uses the same prediction schema as the
+text API, with the extracted ``text`` and uploaded ``filename`` included. When
+``public_dashboard_link`` is ``true``, each result also includes a
+``dashboard_link``.
+
+.. http:post:: https://file-external.api.pangram.com/
+
+  **Request Headers**
+
+  Do not set ``Content-Type`` manually for multipart requests. HTTP clients add
+  the multipart boundary automatically.
+
+  .. code-block:: json
+
+    {
+      "x-api-key": "<api-key>"
+    }
+
+  **Multipart Form Fields**
+
+  .. list-table::
+     :header-rows: 1
+
+     * - Field
+       - Type
+       - Required
+       - Description
+     * - ``files``
+       - file[]
+       - Yes
+       - ``.docx``, ``.pdf``, or ``.rtf`` files to analyze. Include this form field once per uploaded file.
+     * - ``public_dashboard_link``
+       - boolean
+       - No
+       - Whether to create and return a ``dashboard_link`` for each uploaded file. Defaults to ``false``.
+
+  **Example Request**
+
+  .. code-block:: http
+
+    POST https://file-external.api.pangram.com/ HTTP/1.1
+    x-api-key: your_api_key_here
+    Content-Type: multipart/form-data; boundary=...
+
+    --...
+    Content-Disposition: form-data; name="files"; filename="document.docx"
+    Content-Type: application/octet-stream
+
+    <file bytes>
+    --...
+    Content-Disposition: form-data; name="public_dashboard_link"
+
+    true
+    --...--
+
+  **Example cURL**
+
+  .. code-block:: bash
+
+    curl -s -X POST https://file-external.api.pangram.com \
+      -H "x-api-key: $PANGRAM_API_KEY" \
+      -F "files=@path/to/first.docx" \
+      -F "files=@path/to/second.pdf" \
+      -F "public_dashboard_link=true"
+
+  **Example Response**
+
+  .. code-block:: json
+
+    [
+      {
+        "filename": "document.docx",
+        "text": "Extracted document text...",
+        "version": "3.3",
+        "headline": "Human Written",
+        "prediction": "We believe this is human-written",
+        "prediction_short": "Human",
+        "fraction_ai": 0.0,
+        "fraction_ai_assisted": 0.0,
+        "fraction_human": 1.0,
+        "num_ai_segments": 0,
+        "num_ai_assisted_segments": 0,
+        "num_human_segments": 1,
+        "windows": [],
+        "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000"
+      }
+    ]
+
+  **Errors**
+
+  - ``400 Bad Request`` - The multipart request is missing a file or includes invalid form data.
+  - ``401 Unauthorized`` - The ``x-api-key`` is missing or invalid.
+  - ``402 Payment Required`` - The account has insufficient credits.
+  - ``413 Payload Too Large`` - The upload exceeds the maximum supported file size.
+  - ``415 Unsupported Media Type`` - The uploaded file type is not supported.
+  - ``422 Unprocessable Entity`` - The ``files`` field is missing, the form data is invalid, or Pangram could not extract valid text from the uploaded file.
+  - ``500 Internal Server Error`` - There was an error processing the upload.
+
 Plagiarism Detection API
 ========================
 

@@ -46,6 +46,41 @@ for window in result['windows']:
 `predict()` submits to Pangram's async inference API and waits for the result before returning.
 Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text, timeout=300, poll_interval=0.5)` to include a `dashboard_link` in the completed result.
 
+### Upload files
+
+Use `predict_file()` or `predict_files()` when you want Pangram to extract text
+from `.docx`, `.pdf`, or `.rtf` documents and create AI detection results.
+Each result includes the extracted text, prediction fields, window-level
+analysis, and the uploaded `filename`. Set `public_dashboard_link=True` to
+include a `dashboard_link`.
+
+```
+from pangram import Pangram
+
+pangram_client = Pangram()
+
+result = pangram_client.predict_file(
+    "path/to/document.docx",
+    public_dashboard_link=True,
+)
+
+print(result["dashboard_link"])
+print(result["prediction_short"])
+print(result["filename"])
+```
+
+To upload multiple files in one request:
+
+```
+results = pangram_client.predict_files(
+    ["path/to/first.docx", "path/to/second.pdf"],
+    public_dashboard_link=True,
+)
+
+for result in results:
+    print(result["dashboard_link"])
+```
+
 ### Submit a Bulk API job
 
 Use the Bulk API for asynchronous AI detection across many inputs.

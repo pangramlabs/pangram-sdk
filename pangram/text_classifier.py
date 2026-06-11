@@ -2,11 +2,12 @@ import requests
 import os
 import time
 import warnings
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 
-SOURCE_VERSION = "python_sdk_0.3.0"
+SOURCE_VERSION = "python_sdk_0.3.1"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
+FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 ASYNC_SUCCESS_STAGE = 'STAGE_SUCCESS'
 ASYNC_FAILED_STAGE = 'STAGE_FAILED'
@@ -34,10 +35,15 @@ class PangramText:
         if self.api_key is None:
             raise ValueError("API key is required. Set the environment variable PANGRAM_API_KEY or pass it as an argument to PangramText.")
 
+    def _auth_headers(self) -> Dict[str, str]:
+        return {
+            'x-api-key': self.api_key,
+        }
+
     def _headers(self) -> Dict[str, str]:
         return {
             'Content-Type': 'application/json',
-            'x-api-key': self.api_key,
+            **self._auth_headers(),
         }
 
     def _request_timeout(self, deadline: float) -> float:
@@ -426,6 +432,98 @@ class PangramText:
             timeout,
             max(MIN_POLL_INTERVAL_SECONDS, poll_interval),
         )
+
+    def predict_files(
+        self,
+        file_paths: List[Union[str, os.PathLike]],
+        public_dashboard_link: bool = False,
+        timeout: float = DEFAULT_PREDICT_TIMEOUT_SECONDS,
+    ) -> List[Dict]:
+        """
+        Upload one or more files for AI detection.
+
+        Files are submitted to Pangram's file upload endpoint as multipart form
+        data with one ``files`` field per uploaded .docx, .pdf, or .rtf file.
+        Each returned result includes the extracted text, prediction fields,
+        window-level analysis, and the uploaded ``filename``. When
+        ``public_dashboard_link`` is true, each result also includes a
+        ``dashboard_link`` URL.
+
+        :param file_paths: Paths to files to upload and analyze.
+        :type file_paths: List[Union[str, os.PathLike]]
+        :param public_dashboard_link: Whether to create public dashboard links for the uploaded files. Defaults to False.
+        :type public_dashboard_link: bool
+        :param timeout: Maximum seconds to wait for the upload request to complete. Defaults to 300.
+        :type timeout: float
+        :return: A list of per-file result dictionaries returned by the API.
+        :rtype: List[Dict]
+        :raises ValueError: If no files are provided, if timeout is invalid, if
+                            the API returns an error, or if the response is invalid.
+        :raises requests.RequestException: File open errors are raised by Python before the request is sent.
+        """
+        if not file_paths:
+            raise ValueError("file_paths must contain at least one file")
+        if timeout <= 0:
+            raise ValueError("timeout must be greater than 0")
+
+        opened_files = []
+        files_payload = []
+        try:
+            for file_path in file_paths:
+                path = os.fspath(file_path)
+                file_obj = open(path, "rb")
+                opened_files.append(file_obj)
+                files_payload.append(("files", (os.path.basename(path), file_obj)))
+
+            try:
+                response = requests.post(
+                    FILE_UPLOAD_API_ENDPOINT,
+                    files=files_payload,
+                    data={"public_dashboard_link": str(public_dashboard_link).lower()},
+                    headers=self._auth_headers(),
+                    timeout=timeout,
+                )
+            except requests.RequestException as exc:
+                raise ValueError(f"Pangram API request failed while uploading files: {exc}") from exc
+
+            response_json = self._parse_response_json(response)
+            if not isinstance(response_json, list):
+                raise ValueError(f"Error returned by API: invalid file upload response: {response_json}")
+            return response_json
+        finally:
+            for file_obj in opened_files:
+                file_obj.close()
+
+    def predict_file(
+        self,
+        file_path: Union[str, os.PathLike],
+        public_dashboard_link: bool = False,
+        timeout: float = DEFAULT_PREDICT_TIMEOUT_SECONDS,
+    ) -> Dict:
+        """
+        Upload a single file for AI detection.
+
+        This convenience method calls :meth:`predict_files` with one path and
+        returns the first per-file result.
+
+        :param file_path: Path to the file to upload and analyze.
+        :type file_path: Union[str, os.PathLike]
+        :param public_dashboard_link: Whether to create a public dashboard link for the uploaded file. Defaults to False.
+        :type public_dashboard_link: bool
+        :param timeout: Maximum seconds to wait for the upload request to complete. Defaults to 300.
+        :type timeout: float
+        :return: The per-file result dictionary returned by the API.
+        :rtype: Dict
+        :raises ValueError: If the API returns an error or an invalid response.
+        """
+        response_json = self.predict_files(
+            [file_path],
+            public_dashboard_link=public_dashboard_link,
+            timeout=timeout,
+        )
+        if not response_json:
+            raise ValueError("Error returned by API: empty file upload response")
+        return response_json[0]
 
 
     def predict_short(self, text: str) -> Dict:
