@@ -69,21 +69,11 @@ Use `predict(text, model="pangram-4", public_dashboard_link=True)` or
 poll_interval=0.5)` to include a `dashboard_link` in the completed result.
 
 Pangram 4 returns `version == "4.0"`. Every Pangram 4 window includes
-`is_humanized` and `humanizer_score`; these fields are omitted from models that
-do not expose the humanizer head. Human windows and windows without humanizer
-evidence return `False` and `0.0`, respectively. Pangram 4 uses the single
+`is_humanized` and `humanizer_score`. Pangram 4 uses the single
 `"AI-Assisted"` window label rather than lightly/moderately assisted variants,
 and `confidence` remains a string. Some accounts may also receive a 15-value
 `edit_bucket_probabilities` vector; that field is enabled separately from
 Pangram 4.
-
-Pangram 4 may normalize the returned text before inference: adversarial Unicode
-is removed, runs of line breaks and their surrounding horizontal whitespace are
-replaced with one space, and leading/trailing whitespace is stripped. Internal
-spacing, case, punctuation, and emoji are otherwise preserved. Treat
-`result["text"]` as canonical: window `start_index` and `end_index` are
-zero-based, end-exclusive character offsets into that returned text, not
-necessarily the exact string submitted.
 
 Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and

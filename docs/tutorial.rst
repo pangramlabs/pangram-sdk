@@ -79,20 +79,10 @@ The SDK submits to Pangram's async inference API and waits for the completed res
         humanizer_score = window['humanizer_score']  # 0.0-1.0
 
 Pangram 4 returns ``version == "4.0"``. Every Pangram 4 window includes
-``is_humanized`` and ``humanizer_score``; models that do not expose the
-humanizer head omit these fields. Human windows and windows without humanizer
-evidence return ``False`` and ``0.0``, respectively. Pangram 4 window labels
+``is_humanized`` and ``humanizer_score``. Pangram 4 window labels
 are ``"AI-Generated"``, ``"AI-Assisted"``, or ``"Human Written"``;
 lightly/moderately assisted variants are not returned. ``confidence`` remains
 a string.
-
-Pangram 4 may normalize the returned text before inference: adversarial Unicode
-is removed, runs of line breaks and their surrounding horizontal whitespace
-are replaced with one space, and leading/trailing whitespace is stripped.
-Internal spacing, case, punctuation, and emoji are otherwise preserved. Treat
-``result["text"]`` as canonical. Window ``start_index`` and ``end_index`` are
-zero-based, end-exclusive character offsets into that returned text, not
-necessarily the exact string submitted.
 
 Results remain normal dictionaries. Typed applications can import
 ``PredictionResult``, ``PredictionWindow``, ``BulkResultsPage``, and

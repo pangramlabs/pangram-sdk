@@ -36,11 +36,6 @@ The Python SDK projects the response to a ``list[str]``:
       ]
     }
 
-  An API key that is not enabled for Pangram 4 may receive only
-  ``{"models": ["default"]}``. A missing or invalid API key returns
-  ``401 Unauthorized``; an account with insufficient credits returns
-  ``402 Payment Required``.
-
 Inference API
 =============
 
@@ -118,7 +113,7 @@ require callers to select a model explicitly:
 
   :>json string task_id: The ID of the async inference task. Present while the task is in progress.
   :>json string stage: Current task stage. Terminal stages are ``STAGE_SUCCESS`` and ``STAGE_FAILED``.
-  :>json string text: The analyzed text returned by the model. Pangram 4 may normalize it before inference. Present on success.
+  :>json string text: The analyzed text returned by the model. Present on success.
   :>json string version: The API version identifier. Present on success.
   :>json string headline: Classification headline summarizing the result. Present on success.
   :>json string prediction: Long-form prediction string representing the classification. Present on success.
@@ -201,20 +196,7 @@ require callers to select a model explicitly:
     }
 
   Every Pangram 4 window includes ``is_humanized`` and
-  ``humanizer_score`` (0.0-1.0). Human windows and windows without humanizer
-  evidence return ``false`` and ``0.0``. Models that do not expose the
-  humanizer head omit both fields. Some accounts may also receive a 15-value
-  ``edit_bucket_probabilities`` vector; that field is enabled separately from
-  Pangram 4.
-
-  Pangram 4 may normalize text before inference. It removes adversarial
-  Unicode, replaces runs of line breaks and their surrounding horizontal
-  whitespace with one space, and strips leading/trailing whitespace. Internal
-  spacing, case, punctuation, and emoji are otherwise preserved. The returned
-  top-level ``text`` is canonical. Window ``start_index`` and ``end_index`` are
-  zero-based, end-exclusive character offsets into that returned text, so use
-  ``text[start_index:end_index]`` rather than indexing into the original
-  submitted string.
+  ``humanizer_score`` (0.0-1.0).
 
   **Failed Response**
 
@@ -446,10 +428,6 @@ create AI detection results. Each result uses the same prediction schema as the
 text API, with the extracted ``text`` and uploaded ``filename`` included. When
 ``public_dashboard_link`` is ``true``, each result also includes a
 ``dashboard_link``.
-
-File prediction currently uses Pangram's default model only. This endpoint, and
-the Python SDK's ``predict_file()`` and ``predict_files()`` methods, do not
-accept a ``model`` selector.
 
 .. http:post:: https://file-external.api.pangram.com/
 
