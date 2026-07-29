@@ -232,12 +232,6 @@ Bulk metadata and results are retained for 48 hours after the job reaches a
 terminal status. ``created_at`` and ``completed_at`` are returned as Unix epoch
 seconds encoded as strings, such as ``"1760000000.0"``.
 
-The launch bulk limit is 1,000 billable units per request. Billing follows the
-model that actually serves the job: the standard model uses one unit per
-started 1,000-word block, while Pangram 4 uses one unit per started 100-word
-block. Each valid item has a minimum of one unit. There is no separate
-item-count limit, but normal request-body limits still apply.
-
 One ``model`` applies to the entire bulk job; per-item model selectors are not
 supported. The REST endpoint accepts an omitted selector only for backward
 compatibility and resolves it to ``"default"``. New integrations should send it
