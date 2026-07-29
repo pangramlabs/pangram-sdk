@@ -1,5 +1,5 @@
 """Define the public objects available from ``import pangram``."""
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 __author__ = "Max Spero"
 __email__ = "max@pangram.com"
 __license__ = "MIT"
