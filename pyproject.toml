@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pangram-sdk"
-version = "0.3.1"
+version = "0.4.0"
 description = ""
 authors = ["Max Spero <max@pangramlabs.com>"]
 readme = "README.md"

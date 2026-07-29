@@ -1,12 +1,69 @@
+Models API
+==========
+
+Use the Models API to discover the model selectors that an API key can
+currently use. The response is entitlement- and availability-aware; do not
+hard-code the returned catalog or assume that every API key sees the same
+models. Clients should preserve the order returned by the server.
+
+The Python SDK projects the response to a ``list[str]``:
+
+.. code:: python
+
+  available_models = pangram_client.list_models()
+  # e.g., ["default", "pangram-4"]
+
+.. http:get:: https://text.external-api.pangram.com/models
+
+  :>json array models: Ordered public model selectors currently available to the authenticated API key.
+
+  **Request Headers**
+
+  .. code-block:: json
+
+    {
+      "x-api-key": "<api-key>"
+    }
+
+  **Example Response**
+
+  .. code-block:: json
+
+    {
+      "models": [
+        "default",
+        "pangram-4"
+      ]
+    }
+
+  An API key that is not enabled for Pangram 4 may receive only
+  ``{"models": ["default"]}``. A missing or invalid API key returns
+  ``401 Unauthorized``; an account with insufficient credits returns
+  ``402 Payment Required``.
+
 Inference API
 =============
 
 The Inference API accepts text, creates a task, and returns a task ID.
 Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
+For backward compatibility, the REST endpoint currently accepts an omitted
+``model`` and uses Pangram's server default. New integrations should always
+send one of the values returned by the Models API.
+
+The Python SDK exposes ``model`` as a keyword-only argument. For backward
+compatibility, omitting it currently selects ``"default"`` and emits a
+``DeprecationWarning``. Explicitly pass ``model="default"`` or
+``model="pangram-4"`` in new code. After September 30, 2026, the SDK will
+require callers to select a model explicitly:
+
+.. code:: python
+
+  result = pangram_client.predict(text, model="pangram-4")
 
 .. http:post:: https://text.external-api.pangram.com/task
 
   :<json string text: The input text to analyze with Pangram.
+  :<json string model: Optional model selector returned by the Models API. Defaults to ``"default"``.
   :<json boolean public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to false.
   :>json string task_id: The ID of the async inference task.
 
@@ -25,6 +82,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
     {
       "text": "<text>",
+      "model": "pangram-4",
       "public_dashboard_link": false
     }
 
@@ -37,7 +95,8 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
     x-api-key: your_api_key_here
 
     {
-      "text": "The text to analyze",
+      "text": "AI-assisted passage.\nHuman passage.",
+      "model": "pangram-4",
       "public_dashboard_link": true
     }
 
@@ -49,11 +108,17 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
       "task_id": "123e4567-e89b-12d3-a456-426614174000"
     }
 
+  **Model Selection Errors**
+
+  - ``422 Unprocessable Entity`` - The selector is malformed or unknown.
+  - ``403 Forbidden`` - The requested model is not enabled for the API key.
+  - ``503 Service Unavailable`` - The requested model is temporarily unavailable.
+
 .. http:get:: https://text.external-api.pangram.com/task/(string:task_id)
 
   :>json string task_id: The ID of the async inference task. Present while the task is in progress.
   :>json string stage: Current task stage. Terminal stages are ``STAGE_SUCCESS`` and ``STAGE_FAILED``.
-  :>json string text: The input text that was analyzed. Present on success.
+  :>json string text: The analyzed text returned by the model. Pangram 4 may normalize it before inference. Present on success.
   :>json string version: The API version identifier. Present on success.
   :>json string headline: Classification headline summarizing the result. Present on success.
   :>json string prediction: Long-form prediction string representing the classification. Present on success.
@@ -64,7 +129,7 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
   :>json int num_ai_segments: Number of text segments classified as AI. Present on success.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted. Present on success.
   :>json int num_human_segments: Number of text segments classified as human. Present on success.
-  :>json array windows: List of analyzed text windows. Each window includes text, label, ai_assistance_score, confidence, start_index, end_index, word_count, and token_length. Present on success.
+  :>json array windows: List of analyzed text windows. Each window includes ``text``, ``label``, ``ai_assistance_score``, string ``confidence``, ``start_index``, ``end_index``, ``word_count``, and ``token_length``. Pangram 4 windows also include ``is_humanized`` and ``humanizer_score``. Present on success.
   :>json string dashboard_link: A link to the dashboard page containing the full classification result. Present on success when public_dashboard_link is true.
 
   **Request Headers**
@@ -86,45 +151,70 @@ Poll the task endpoint until the stage is ``STAGE_SUCCESS`` or ``STAGE_FAILED``.
 
   **Success Response**
 
+  This example shows a Pangram 4 result. Pangram 4 returns ``version`` 4.0,
+  uses ``"AI-Assisted"`` rather than lightly/moderately assisted window labels,
+  and keeps ``confidence`` as one of the strings ``"Low"``, ``"Medium"``, or
+  ``"High"``.
+
   .. code-block:: json
 
     {
       "stage": "STAGE_SUCCESS",
-      "text": "The text to analyze",
-      "version": "3.0",
-      "headline": "AI Detected",
-      "prediction": "We are confident that this document contains AI-generated or AI-assisted content.",
+      "text": "AI-assisted passage. Human passage.",
+      "version": "4.0",
+      "headline": "AI Assisted",
+      "prediction": "We believe that this text is a mix of AI-assisted and human-written content.",
       "prediction_short": "Mixed",
-      "fraction_ai": 0.70,
-      "fraction_ai_assisted": 0.20,
-      "fraction_human": 0.10,
-      "num_ai_segments": 7,
-      "num_ai_assisted_segments": 2,
+      "fraction_ai": 0.0,
+      "fraction_ai_assisted": 0.6,
+      "fraction_human": 0.4,
+      "num_ai_segments": 0,
+      "num_ai_assisted_segments": 1,
       "num_human_segments": 1,
       "dashboard_link": "https://www.pangram.com/history/123e4567-e89b-12d3-a456-426614174000",
       "windows": [
         {
-          "text": "The text to analyze",
-          "label": "AI-Generated",
-          "ai_assistance_score": 0.85,
+          "text": "AI-assisted passage. ",
+          "label": "AI-Assisted",
+          "ai_assistance_score": 0.55,
           "confidence": "High",
           "start_index": 0,
-          "end_index": 19,
-          "word_count": 4,
-          "token_length": 5
+          "end_index": 21,
+          "word_count": 2,
+          "token_length": 5,
+          "is_humanized": true,
+          "humanizer_score": 0.91
         },
         {
-          "text": "with classification",
-          "label": "Moderately AI-Assisted",
-          "ai_assistance_score": 0.45,
+          "text": "Human passage.",
+          "label": "Human Written",
+          "ai_assistance_score": 0.02,
           "confidence": "Medium",
-          "start_index": 20,
-          "end_index": 49,
+          "start_index": 21,
+          "end_index": 35,
           "word_count": 2,
-          "token_length": 3
+          "token_length": 4,
+          "is_humanized": false,
+          "humanizer_score": 0.0
         }
       ]
     }
+
+  Every Pangram 4 window includes ``is_humanized`` and
+  ``humanizer_score`` (0.0-1.0). Human windows and windows without humanizer
+  evidence return ``false`` and ``0.0``. Models that do not expose the
+  humanizer head omit both fields. Some accounts may also receive a 15-value
+  ``edit_bucket_probabilities`` vector; that field is enabled separately from
+  Pangram 4.
+
+  Pangram 4 may normalize text before inference. It removes adversarial
+  Unicode, replaces runs of line breaks and their surrounding horizontal
+  whitespace with one space, and strips leading/trailing whitespace. Internal
+  spacing, case, punctuation, and emoji are otherwise preserved. The returned
+  top-level ``text`` is canonical. Window ``start_index`` and ``end_index`` are
+  zero-based, end-exclusive character offsets into that returned text, so use
+  ``text[start_index:end_index]`` rather than indexing into the original
+  submitted string.
 
   **Failed Response**
 
@@ -160,15 +250,34 @@ Bulk metadata and results are retained for 48 hours after the job reaches a
 terminal status. ``created_at`` and ``completed_at`` are returned as Unix epoch
 seconds encoded as strings, such as ``"1760000000.0"``.
 
-The launch bulk limit is 1,000 billable units per request. A billable unit is
-one started 1,000-word block per valid item, with a minimum of one unit per
-item. There is no separate item-count limit, but normal request-body limits
-still apply.
+The launch bulk limit is 1,000 billable units per request. Billing follows the
+model that actually serves the job: the standard model uses one unit per
+started 1,000-word block, while Pangram 4 uses one unit per started 100-word
+block. Each valid item has a minimum of one unit. There is no separate
+item-count limit, but normal request-body limits still apply.
+
+One ``model`` applies to the entire bulk job; per-item model selectors are not
+supported. The REST endpoint accepts an omitted selector only for backward
+compatibility and resolves it to ``"default"``. New integrations should send it
+explicitly. The Python SDK's keyword-only ``model`` argument is temporarily
+optional: omission selects ``"default"`` and emits a ``DeprecationWarning``.
+After September 30, 2026, it will be required:
+
+.. code:: python
+
+  bulk = pangram_client.submit_bulk(
+      items=[{"id": "row-001", "text": "Text to analyze"}],
+      model="pangram-4",
+  )
+
+Invalid, unauthorized, or unavailable bulk model selectors return the same
+``422``, ``403``, and ``503`` responses described for text inference.
 
 .. http:post:: https://text.external-api.pangram.com/bulk
 
   :<json array text: A list of input texts. Provide either ``text`` or ``items``.
   :<json array items: A list of objects with ``text`` and optional ``id`` fields. Provide either ``items`` or ``text``.
+  :<json string model: Optional model selector returned by the Models API. Applies to every item in the job and defaults to ``"default"``.
   :>json string bulk_id: The ID of the bulk job.
   :>json string status: Initial status, usually ``queued`` or ``failed`` if every item failed immediate validation.
   :>json int total_items: Total number of submitted items.
@@ -192,7 +301,8 @@ still apply.
       "items": [
         {"id": "row-001", "text": "First text to analyze"},
         {"id": "row-002", "text": "Second text to analyze"}
-      ]
+      ],
+      "model": "pangram-4"
     }
 
   **Example Response**
@@ -294,9 +404,10 @@ still apply.
           "stage": "STAGE_SUCCESS",
           "error": null,
           "result": {
+            "stage": "STAGE_SUCCESS",
             "text": "First text to analyze",
-            "version": "3.3",
-            "prediction": "We believe this is human-written",
+            "version": "4.0",
+            "prediction": "We believe that this entire text is human-written.",
             "prediction_short": "Human",
             "fraction_ai": 0.0,
             "fraction_ai_assisted": 0.0,
@@ -305,7 +416,20 @@ still apply.
             "num_ai_segments": 0,
             "num_ai_assisted_segments": 0,
             "num_human_segments": 1,
-            "windows": []
+            "windows": [
+              {
+                "text": "First text to analyze",
+                "label": "Human Written",
+                "ai_assistance_score": 0.02,
+                "confidence": "High",
+                "start_index": 0,
+                "end_index": 21,
+                "word_count": 4,
+                "token_length": 5,
+                "is_humanized": false,
+                "humanizer_score": 0.0
+              }
+            ]
           }
         }
       ],
@@ -322,6 +446,10 @@ create AI detection results. Each result uses the same prediction schema as the
 text API, with the extracted ``text`` and uploaded ``filename`` included. When
 ``public_dashboard_link`` is ``true``, each result also includes a
 ``dashboard_link``.
+
+File prediction currently uses Pangram's default model only. This endpoint, and
+the Python SDK's ``predict_file()`` and ``predict_files()`` methods, do not
+accept a ``model`` selector.
 
 .. http:post:: https://file-external.api.pangram.com/
 

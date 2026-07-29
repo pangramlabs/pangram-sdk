@@ -21,6 +21,23 @@ my_api_key = ''  # Fill this in with your API key.
 pangram_client = Pangram(api_key=my_api_key)
 ```
 
+### Discover available models
+
+Model availability is specific to your API key. Use `list_models()` instead of
+hard-coding a model catalog:
+
+```
+available_models = pangram_client.list_models()
+print(available_models)  # e.g., ["default", "pangram-4"]
+```
+
+The returned list preserves the server's model order and only includes models
+that your API key can currently use. The keyword-only `model` argument on text
+and bulk requests is temporarily optional for backward compatibility. Omitting
+it selects Pangram's abstract default and emits a `DeprecationWarning`.
+Explicitly pass `model="default"` or `model="pangram-4"` in new code. After
+September 30, 2026, callers will be required to select a model explicitly.
+
 ### Make a request
 
 Main prediction method (AI-assistance detection and segment-level analysis):
@@ -28,8 +45,9 @@ Main prediction method (AI-assistance detection and segment-level analysis):
 from pangram import Pangram
 pangram_client = Pangram()
 
-result = pangram_client.predict(text)
+result = pangram_client.predict(text, model="pangram-4")
 stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+version = result['version']  # "4.0" for Pangram 4.
 
 # Analysis with AI-assistance detection.
 fraction_ai = result['fraction_ai']
@@ -39,12 +57,37 @@ num_ai_segments = result['num_ai_segments']
 
 # Access individual window classifications
 for window in result['windows']:
-    label = window['label']  # e.g., "AI-Generated", "Moderately AI-Assisted"
+    label = window['label']  # "AI-Generated", "AI-Assisted", or "Human Written"
     ai_assistance_score = window['ai_assistance_score']
-    confidence = window['confidence']  # "High", "Medium", "Low"
+    confidence = window['confidence']  # A string: "High", "Medium", or "Low"
+    is_humanized = window['is_humanized']
+    humanizer_score = window['humanizer_score']  # 0.0-1.0
 ```
 `predict()` submits to Pangram's async inference API and waits for the result before returning.
-Use `predict(text, public_dashboard_link=True)` or `predict_with_dashboard_link(text, timeout=300, poll_interval=0.5)` to include a `dashboard_link` in the completed result.
+Use `predict(text, model="pangram-4", public_dashboard_link=True)` or
+`predict_with_dashboard_link(text, model="pangram-4", timeout=300,
+poll_interval=0.5)` to include a `dashboard_link` in the completed result.
+
+Pangram 4 returns `version == "4.0"`. Every Pangram 4 window includes
+`is_humanized` and `humanizer_score`; these fields are omitted from models that
+do not expose the humanizer head. Human windows and windows without humanizer
+evidence return `False` and `0.0`, respectively. Pangram 4 uses the single
+`"AI-Assisted"` window label rather than lightly/moderately assisted variants,
+and `confidence` remains a string. Some accounts may also receive a 15-value
+`edit_bucket_probabilities` vector; that field is enabled separately from
+Pangram 4.
+
+Pangram 4 may normalize the returned text before inference: adversarial Unicode
+is removed, runs of line breaks and their surrounding horizontal whitespace are
+replaced with one space, and leading/trailing whitespace is stripped. Internal
+spacing, case, punctuation, and emoji are otherwise preserved. Treat
+`result["text"]` as canonical: window `start_index` and `end_index` are
+zero-based, end-exclusive character offsets into that returned text, not
+necessarily the exact string submitted.
+
+Results remain normal dictionaries. For typed applications, the package
+exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
+`BulkResults` `TypedDict` contracts.
 
 ### Upload files
 
@@ -53,6 +96,9 @@ from `.docx`, `.pdf`, or `.rtf` documents and create AI detection results.
 Each result includes the extracted text, prediction fields, window-level
 analysis, and the uploaded `filename`. Set `public_dashboard_link=True` to
 include a `dashboard_link`.
+
+File prediction currently uses Pangram's default model only.
+`predict_file()` and `predict_files()` do not accept `model`.
 
 ```
 from pangram import Pangram
@@ -97,10 +143,13 @@ from pangram import Pangram
 
 pangram_client = Pangram()
 
-bulk = pangram_client.submit_bulk(items=[
-    {"id": "row-001", "text": "First text to analyze"},
-    {"id": "row-002", "text": "Second text to analyze"},
-])
+bulk = pangram_client.submit_bulk(
+    items=[
+        {"id": "row-001", "text": "First text to analyze"},
+        {"id": "row-002", "text": "Second text to analyze"},
+    ],
+    model="pangram-4",
+)
 
 bulk_id = bulk["bulk_id"]
 status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
@@ -113,6 +162,12 @@ for item in results["items"]:
 for failed in results["failed_items"]:
     print(failed["id"], failed["error"])
 ```
+
+`model` is keyword-only and applies to the entire bulk job. During the
+compatibility period, omitting it selects `"default"` and emits a
+`DeprecationWarning`; after September 30, 2026, it will be required. Per-item
+model selectors are not supported. Successful Pangram 4 item results use the
+same version 4.0 and window schema described above.
 
 Bulk jobs can also be inspected without waiting:
 
