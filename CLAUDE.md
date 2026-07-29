@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the official Python SDK for the Pangram Labs API, which provides AI-generated text detection and plagiarism checking services.
+This is the official Python SDK for the Pangram Labs API, which provides
+model-selectable AI-generated text detection, bulk and file analysis, and
+plagiarism checking services.
 
 ## Build and Development Commands
 
@@ -32,16 +34,27 @@ cd docs && make html
 
 ## Architecture
 
-The SDK is minimal with two main files:
+The SDK is intentionally small:
 
-- `pangram/__init__.py` - Exports `Pangram` (alias for `PangramText`) as the main client class
+- `pangram/__init__.py` - Exports `Pangram` (alias for `PangramText`) and public response schemas
 - `pangram/text_classifier.py` - Contains the `PangramText` class with all API methods
+- `pangram/schemas.py` - Defines the public typed dictionary response contracts
 
 ### API Methods
 
-- `predict(text)` - Main async inference endpoint for AI-assistance detection with segment-level analysis
+- `list_models()` - Returns the detection models available to the API key
+- `predict(text, ..., *, model=None)` - Main async inference endpoint for AI-assistance detection with segment-level analysis
+- `submit_bulk(text=None, items=None, *, model=None)` - Submits model-selectable asynchronous bulk work
+- `predict_file()` / `predict_files()` - Uploads documents using the file service's current default model
 - `check_plagiarism(text)` - Plagiarism detection against online content database
 
 ### API Configuration
 
-API endpoints are defined as constants at the top of `text_classifier.py`. The SDK uses `requests` for HTTP calls and authenticates via `x-api-key` header. The main prediction call submits a task and polls until completion.
+API endpoints are defined as constants at the top of `text_classifier.py`. The
+SDK uses `requests` for HTTP calls and authenticates via the `x-api-key` header.
+Text and bulk submissions accept a keyword-only `model`; callers should pass
+`model="default"` explicitly or discover available selectors with
+`list_models()`. Omitting `model` temporarily preserves the server-default
+behavior and emits a deprecation warning; explicit selection becomes required
+after September 30, 2026. The main prediction call submits a task and polls
+until completion.

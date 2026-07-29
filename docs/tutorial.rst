@@ -29,6 +29,25 @@ Or pass it directly to the constructor:
     my_api_key = ''  # Fill this in with your API key.
     pangram_client = Pangram(api_key=my_api_key)
 
+Discover available models
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Model availability is specific to your API key. Use ``list_models()`` instead
+of hard-coding a model catalog:
+
+.. code:: python
+
+    available_models = pangram_client.list_models()
+    print(available_models)  # e.g., ["default", "pangram-4"]
+
+The returned ``list[str]`` preserves server order and only includes models your
+API key can currently use. The keyword-only ``model`` argument on text and bulk
+requests is temporarily optional for backward compatibility. Omitting it
+selects Pangram's abstract default and emits a ``DeprecationWarning``.
+Explicitly pass ``model="default"`` or ``model="pangram-4"`` in new code.
+After September 30, 2026, callers will be required to select a model
+explicitly.
+
 Make a request
 ~~~~~~~~~~~~~~
 
@@ -42,8 +61,9 @@ The SDK submits to Pangram's async inference API and waits for the completed res
     from pangram import Pangram
 
     pangram_client = Pangram()
-    result = pangram_client.predict(text)
+    result = pangram_client.predict(text, model="pangram-4")
     stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
+    version = result['version']  # "4.0" for Pangram 4.
 
     # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
@@ -54,7 +74,19 @@ The SDK submits to Pangram's async inference API and waits for the completed res
     for window in result['windows']:
         label = window['label']
         ai_assistance_score = window['ai_assistance_score']
-        confidence = window['confidence']
+        confidence = window['confidence']  # "High", "Medium", or "Low"
+        is_humanized = window['is_humanized']
+        humanizer_score = window['humanizer_score']  # 0.0-1.0
+
+Pangram 4 returns ``version == "4.0"``. Every Pangram 4 window includes
+``is_humanized`` and ``humanizer_score``. Pangram 4 window labels
+are ``"AI-Generated"``, ``"AI-Assisted"``, or ``"Human Written"``;
+lightly/moderately assisted variants are not returned. ``confidence`` remains
+a string.
+
+Results remain normal dictionaries. Typed applications can import
+``PredictionResult``, ``PredictionWindow``, ``BulkResultsPage``, and
+``BulkResults`` from ``pangram``.
 
 Upload files
 ~~~~~~~~~~~~
@@ -63,6 +95,9 @@ text from ``.docx``, ``.pdf``, or ``.rtf`` documents and create AI detection
 results. Each result includes the extracted text, prediction fields,
 window-level analysis, and the uploaded ``filename``. Set
 ``public_dashboard_link=True`` to include a ``dashboard_link``.
+
+File prediction currently uses Pangram's default model only.
+``predict_file()`` and ``predict_files()`` do not accept ``model``.
 
 .. code:: python
 
@@ -107,10 +142,13 @@ and length of submitted items and current system load. Use
 
     pangram_client = Pangram()
 
-    bulk = pangram_client.submit_bulk(items=[
-        {"id": "row-001", "text": "First text to analyze"},
-        {"id": "row-002", "text": "Second text to analyze"},
-    ])
+    bulk = pangram_client.submit_bulk(
+        items=[
+            {"id": "row-001", "text": "First text to analyze"},
+            {"id": "row-002", "text": "Second text to analyze"},
+        ],
+        model="pangram-4",
+    )
 
     bulk_id = bulk["bulk_id"]
     status = pangram_client.wait_for_bulk(bulk_id, poll_interval=2)
@@ -122,6 +160,12 @@ and length of submitted items and current system load. Use
 
     for failed in results["failed_items"]:
         print(failed["id"], failed["error"])
+
+``model`` is keyword-only and applies to the entire bulk job. During the
+compatibility period, omitting it selects ``"default"`` and emits a
+``DeprecationWarning``; after September 30, 2026, it will be required.
+Per-item model selectors are not supported. Successful Pangram 4 item results
+use the same version 4.0 and window schema described above.
 
 You can also inspect jobs without waiting:
 

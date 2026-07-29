@@ -8,3 +8,11 @@ pangram.text\_classifier module
    :members:
    :undoc-members:
    :show-inheritance:
+
+pangram.schemas module
+-----------------------
+
+.. automodule:: pangram.schemas
+   :members:
+   :undoc-members:
+   :show-inheritance:
