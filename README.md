@@ -71,9 +71,7 @@ poll_interval=0.5)` to include a `dashboard_link` in the completed result.
 Pangram 4 returns `version == "4.0"`. Every Pangram 4 window includes
 `is_humanized` and `humanizer_score`. Pangram 4 uses the single
 `"AI-Assisted"` window label rather than lightly/moderately assisted variants,
-and `confidence` remains a string. Some accounts may also receive a 15-value
-`edit_bucket_probabilities` vector; that field is enabled separately from
-Pangram 4.
+and `confidence` remains a string.
 
 Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and

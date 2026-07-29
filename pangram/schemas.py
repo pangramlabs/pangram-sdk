@@ -28,13 +28,10 @@ class PredictionWindow(_PredictionWindowRequired, total=False):
 
     ``is_humanized`` and ``humanizer_score`` are present on Pangram 4
     responses and omitted from classic-model responses.
-    ``edit_bucket_probabilities`` is a separately feature-gated vector of 15
-    probabilities.
     """
 
     is_humanized: bool
     humanizer_score: float
-    edit_bucket_probabilities: list[float]
 
 
 class _PredictionResultRequired(TypedDict):

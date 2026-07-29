@@ -593,9 +593,6 @@ class PangramText:
                       classified the window as humanized. Pangram 4 only.
                     - humanizer_score (float): Pangram 4 humanizer-head score
                       from 0.0 to 1.0. Pangram 4 only.
-                    - edit_bucket_probabilities (list): Optional,
-                      separately enabled vector of 15 edit-bucket
-                      probabilities.
         :rtype: PredictionResult
         :raises ValueError: If the API returns an error or if the response is invalid
         :raises TimeoutError: If the async task does not complete before timeout

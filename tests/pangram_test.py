@@ -111,10 +111,6 @@ class TestModelSelectionContract(unittest.TestCase):
         self.assertIn("stage", PredictionResult.__required_keys__)
         self.assertIn("is_humanized", PredictionWindow.__optional_keys__)
         self.assertIn("humanizer_score", PredictionWindow.__optional_keys__)
-        self.assertIn(
-            "edit_bucket_probabilities",
-            PredictionWindow.__optional_keys__,
-        )
         self.assertIn("result", BulkResultItem.__required_keys__)
         self.assertIn("items", BulkResultsPage.__required_keys__)
         self.assertIn("items", BulkResults.__required_keys__)
@@ -403,7 +399,6 @@ class TestPredict(unittest.TestCase):
                     "token_length": 10,
                     "is_humanized": False,
                     "humanizer_score": 0.0,
-                    "edit_bucket_probabilities": [0.0] * 14 + [1.0],
                 }
             ],
         }
@@ -431,10 +426,6 @@ class TestPredict(unittest.TestCase):
         self.assertEqual(result, success_response)
         self.assertIs(result["windows"][0]["is_humanized"], False)
         self.assertEqual(result["windows"][0]["humanizer_score"], 0.0)
-        self.assertEqual(
-            result["windows"][0]["edit_bucket_probabilities"],
-            [0.0] * 14 + [1.0],
-        )
 
     def test_predict_normalizes_model_whitespace(self):
         pangram_client = Pangram(api_key="test-key")
