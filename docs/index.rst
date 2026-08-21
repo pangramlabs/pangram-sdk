@@ -6,10 +6,11 @@
 Pangram Labs Documentation
 ======================================
 
-**Pangram Labs** can help you detect AI-generated text with a simple REST API or Python integration.
+**Pangram Labs** can help you detect AI-generated text and images with simple
+REST APIs or Python integrations.
 
 .. toctree::
    tutorial
    api/pangram
    api/rest
-
+   api/image

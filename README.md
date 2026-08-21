@@ -77,6 +77,52 @@ Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 `BulkResults` `TypedDict` contracts.
 
+### Detect an AI-generated image
+
+The production Image API accepts one base64-encoded image asynchronously. The
+SDK does not currently expose a dedicated image method, so use `requests` with
+the same `PANGRAM_API_KEY`:
+
+```
+import base64
+import os
+import time
+from pathlib import Path
+
+import requests
+
+headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
+image_b64 = base64.b64encode(Path("image.png").read_bytes()).decode("ascii")
+
+response = requests.post(
+    "https://image.external-api.pangram.com/v1/tasks",
+    headers=headers,
+    json={"image_b64": image_b64},
+    timeout=30,
+)
+response.raise_for_status()
+task_id = response.json()["task_id"]
+
+while True:
+    response = requests.get(
+        f"https://image.external-api.pangram.com/v1/tasks/{task_id}",
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+    result = response.json()
+    if result["stage"] in {"STAGE_SUCCESS", "STAGE_FAILED"}:
+        break
+    time.sleep(0.5)
+
+print(result)
+```
+
+Successful results include `prediction`, `ai_likelihood`, `confidence`,
+provenance `metadata`, a patch-level `heatmap`, and an inline JPEG `thumbnail`.
+See the [Image Detection API reference](docs/api/image.rst) for the complete
+request, response, stage, safety, and error schemas.
+
 ### Upload files
 
 Use `predict_file()` or `predict_files()` when you want Pangram to extract text
