@@ -167,6 +167,23 @@ compatibility period, omitting it selects ``"default"`` and emits a
 Per-item model selectors are not supported. Successful Pangram 4 item results
 use the same version 4.0 and window schema described above.
 
+Every submission sends an ``Idempotency-Key`` header. Resubmitting the same
+body with the same key replays the original job instead of creating and
+billing a new one, so pass a stable ``idempotency_key`` whenever you may retry
+a submission:
+
+.. code:: python
+
+    bulk = pangram_client.submit_bulk(
+        items=[{"id": "row-001", "text": "First text to analyze"}],
+        model="pangram-4",
+        idempotency_key="my-export-2026-08-27",
+    )
+
+When ``idempotency_key`` is omitted, the SDK generates a fresh key per call
+and includes it in the raised error message if the request fails, so you can
+resubmit safely with that key.
+
 You can also inspect jobs without waiting:
 
 .. code:: python

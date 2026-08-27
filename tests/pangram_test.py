@@ -737,14 +737,80 @@ class TestBulkAPI(unittest.TestCase):
                 items=[{"text": "hello"}],
             )
 
-    def test_submit_bulk_wraps_request_errors(self):
+    def test_submit_bulk_wraps_request_errors_with_retry_key(self):
         pangram_client = Pangram(api_key="test-key")
         with patch(
             "pangram.text_classifier.requests.post",
             side_effect=requests.exceptions.Timeout("timed out"),
         ):
-            with self.assertRaisesRegex(ValueError, "submitting bulk job: timed out"):
-                pangram_client.submit_bulk(model="default", text=["hello"])
+            with self.assertRaisesRegex(
+                ValueError,
+                r"submitting bulk job \(retry safely by resubmitting with "
+                r"idempotency_key='my-stable-key'\): timed out",
+            ):
+                pangram_client.submit_bulk(
+                    model="default",
+                    text=["hello"],
+                    idempotency_key="my-stable-key",
+                )
+
+    def test_submit_bulk_generates_unique_idempotency_key_per_call(self):
+        pangram_client = Pangram(api_key="test-key")
+        bulk_response = {
+            "bulk_id": "blk_123",
+            "status": "queued",
+            "total_items": 1,
+            "accepted_items": [{"index": 0, "id": None, "task_id": "task-1"}],
+            "failed_items": [],
+        }
+
+        with patch(
+            "pangram.text_classifier.requests.post",
+            return_value=MockResponse(status_code=202, json_data=bulk_response),
+        ) as mock_post:
+            pangram_client.submit_bulk(model="default", text=["hello"])
+            pangram_client.submit_bulk(model="default", text=["hello"])
+
+        keys = [
+            call.kwargs["headers"]["Idempotency-Key"]
+            for call in mock_post.call_args_list
+        ]
+        self.assertTrue(all(key.startswith("pangram-sdk-") for key in keys))
+        self.assertEqual(len(set(keys)), 2)
+
+    def test_submit_bulk_sends_explicit_idempotency_key(self):
+        pangram_client = Pangram(api_key="test-key")
+        bulk_response = {
+            "bulk_id": "blk_123",
+            "status": "queued",
+            "total_items": 1,
+            "accepted_items": [{"index": 0, "id": None, "task_id": "task-1"}],
+            "failed_items": [],
+        }
+
+        with patch(
+            "pangram.text_classifier.requests.post",
+            return_value=MockResponse(status_code=202, json_data=bulk_response),
+        ) as mock_post:
+            pangram_client.submit_bulk(
+                model="default",
+                text=["hello"],
+                idempotency_key="my-stable-key",
+            )
+
+        headers = mock_post.call_args.kwargs["headers"]
+        self.assertEqual(headers["Idempotency-Key"], "my-stable-key")
+        self.assertEqual(headers["x-api-key"], "test-key")
+
+    def test_submit_bulk_rejects_invalid_idempotency_key(self):
+        pangram_client = Pangram(api_key="test-key")
+        for invalid_key in ["", "x" * 256]:
+            with self.assertRaisesRegex(ValueError, "idempotency_key"):
+                pangram_client.submit_bulk(
+                    model="default",
+                    text=["hello"],
+                    idempotency_key=invalid_key,
+                )
 
     def test_get_bulk_status(self):
         pangram_client = Pangram(api_key="test-key")

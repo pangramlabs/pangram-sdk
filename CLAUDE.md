@@ -44,7 +44,7 @@ The SDK is intentionally small:
 
 - `list_models()` - Returns the detection models available to the API key
 - `predict(text, ..., *, model=None)` - Main async inference endpoint for AI-assistance detection with segment-level analysis
-- `submit_bulk(text=None, items=None, *, model=None)` - Submits model-selectable asynchronous bulk work
+- `submit_bulk(text=None, items=None, *, model=None, idempotency_key=None)` - Submits model-selectable asynchronous bulk work; always sends an `Idempotency-Key` header (auto-generated per call unless supplied) so exact retries with the same key replay instead of double-billing
 - `predict_file()` / `predict_files()` - Uploads documents using the file service's current default model
 - `check_plagiarism(text)` - Plagiarism detection against online content database
 
