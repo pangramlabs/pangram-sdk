@@ -266,8 +266,18 @@ Invalid, unauthorized, or unavailable bulk model selectors return the same
 
     {
       "Content-Type": "application/json",
-      "x-api-key": "<api-key>"
+      "x-api-key": "<api-key>",
+      "Idempotency-Key": "<stable token for this exact body>"
     }
+
+  ``Idempotency-Key`` is optional but strongly recommended: between 1 and 255
+  characters, stable for this exact request body. Resubmitting the same body
+  with the same key returns the original job instead of creating and billing a
+  new one, which makes retries after timeouts, dropped connections, or ``503``
+  responses safe. Reusing a key with a different body returns ``409``. Without
+  the header, every submission — including a retry of one whose response was
+  lost — creates a new, separately billed job. The Python SDK always sends
+  this header.
 
   **Request Body**
 

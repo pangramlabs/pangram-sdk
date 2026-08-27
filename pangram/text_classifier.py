@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 import os
 import time
+import uuid
 import warnings
 from typing import Dict, Iterator, List, Optional, Tuple, Union, cast
 
@@ -29,6 +30,7 @@ DEFAULT_POLL_INTERVAL_SECONDS = 0.5
 MIN_POLL_INTERVAL_SECONDS = 0.1
 HTTP_REQUEST_TIMEOUT_SECONDS = 10
 MAX_BULK_PAGE_LIMIT = 1000
+MAX_IDEMPOTENCY_KEY_LENGTH = 255
 MODEL_SELECTION_DEPRECATION_MESSAGE = (
     "Omitting model is deprecated. Pass model=\"default\" or another identifier "
     "returned by list_models(). Model will be required after September 30, 2026."
@@ -152,6 +154,7 @@ class PangramText:
         items: Optional[List[Dict[str, str]]] = None,
         *,
         model: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
     ) -> Dict[str, object]:
         """
         Submit a Bulk API job for asynchronous AI detection.
@@ -160,6 +163,14 @@ class PangramText:
         list of dictionaries with ``text`` and an optional customer-defined
         ``id``. The response includes a ``bulk_id`` for polling and immediate
         per-item validation failures, if any.
+
+        Every submission sends an ``Idempotency-Key`` header. Resubmitting the
+        same body with the same key replays the original job instead of
+        creating and billing a new one, so pass your own stable
+        ``idempotency_key`` if you may retry a submission (for example after a
+        timeout or network failure). When omitted, the SDK generates a fresh
+        key per call and includes it in the error message if the request
+        fails, so you can resubmit safely with that key.
 
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Pass ``default`` to use Pangram's
@@ -172,15 +183,30 @@ class PangramText:
         :param items: A list of item dictionaries. Each item must include
                       ``text`` and may include ``id``.
         :type items: List[Dict[str, str]], optional
+        :param idempotency_key: Stable token identifying this exact submission,
+                                between 1 and 255 characters. Reusing the key
+                                with a different body fails with a conflict
+                                error. Defaults to a randomly generated key.
+        :type idempotency_key: str, optional
         :return: Bulk submission response containing ``bulk_id``, ``status``,
                  ``total_items``, ``accepted_items``, and ``failed_items``.
         :rtype: Dict
-        :raises ValueError: If both or neither payload shapes are provided, or
-                            if the API returns an error.
+        :raises ValueError: If both or neither payload shapes are provided, if
+                            idempotency_key is invalid, or if the API returns
+                            an error.
         """
         if (text is None and items is None) or (text is not None and items is not None):
             raise ValueError("Provide exactly one of text or items")
+        if idempotency_key is not None and (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or len(idempotency_key) > MAX_IDEMPOTENCY_KEY_LENGTH
+        ):
+            raise ValueError(
+                f"idempotency_key must be a string between 1 and {MAX_IDEMPOTENCY_KEY_LENGTH} characters"
+            )
 
+        resolved_idempotency_key = idempotency_key or f"pangram-sdk-{uuid.uuid4()}"
         normalized_model = self._resolve_model(model)
         payload: Dict[str, object] = (
             {"items": items} if items is not None else {"text": text}
@@ -191,11 +217,17 @@ class PangramText:
             response = requests.post(
                 f"{API_ENDPOINT}/bulk",
                 json=payload,
-                headers=self._headers(),
+                headers={
+                    **self._headers(),
+                    "Idempotency-Key": resolved_idempotency_key,
+                },
                 timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
             )
         except requests.RequestException as exc:
-            raise ValueError(f"Pangram API request failed while submitting bulk job: {exc}") from exc
+            raise ValueError(
+                "Pangram API request failed while submitting bulk job "
+                f"(retry safely by resubmitting with idempotency_key={resolved_idempotency_key!r}): {exc}"
+            ) from exc
         response_json = self._parse_response_json(response, expected_status_codes=(202,))
         if not isinstance(response_json, dict):
             raise ValueError(f"Error returned by API: invalid bulk response: {response_json}")
