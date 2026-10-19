@@ -73,6 +73,12 @@ Pangram 4 returns `version == "4.0"`. Every Pangram 4 window includes
 `"AI-Assisted"` window label rather than lightly/moderately assisted variants,
 and `confidence` remains a string.
 
+Pangram 4.1 returns `version == "4.1"` and the same window fields, plus
+`class_probabilities` (Human, AI-Assisted, AI-Generated) and
+`calibrated_confidence`, the estimated probability that the window's label is
+correct. Its `confidence` is `"High"` at 0.99 or more, `"Medium"` at 0.90 or
+more, and `"Low"` otherwise.
+
 Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 `BulkResults` `TypedDict` contracts.

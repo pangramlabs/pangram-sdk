@@ -111,6 +111,8 @@ class TestModelSelectionContract(unittest.TestCase):
         self.assertIn("stage", PredictionResult.__required_keys__)
         self.assertIn("is_humanized", PredictionWindow.__optional_keys__)
         self.assertIn("humanizer_score", PredictionWindow.__optional_keys__)
+        self.assertIn("class_probabilities", PredictionWindow.__optional_keys__)
+        self.assertIn("calibrated_confidence", PredictionWindow.__optional_keys__)
         self.assertIn("result", BulkResultItem.__required_keys__)
         self.assertIn("items", BulkResultsPage.__required_keys__)
         self.assertIn("items", BulkResults.__required_keys__)
