@@ -124,7 +124,7 @@ require callers to select a model explicitly:
   :>json int num_ai_segments: Number of text segments classified as AI. Present on success.
   :>json int num_ai_assisted_segments: Number of text segments classified as AI-assisted. Present on success.
   :>json int num_human_segments: Number of text segments classified as human. Present on success.
-  :>json array windows: List of analyzed text windows. Each window includes ``text``, ``label``, ``ai_assistance_score``, string ``confidence``, ``start_index``, ``end_index``, ``word_count``, and ``token_length``. Pangram 4 windows also include ``is_humanized`` and ``humanizer_score``. Present on success.
+  :>json array windows: List of analyzed text windows. Each window includes ``text``, ``label``, ``ai_assistance_score``, string ``confidence``, ``start_index``, ``end_index``, ``word_count``, and ``token_length``. Pangram 4 and 4.1 windows also include ``is_humanized`` and ``humanizer_score``. Pangram 4.1 windows also include ``class_probabilities`` (three floats summing to 1: Human, AI-Assisted, AI-Generated) and ``calibrated_confidence`` (the estimated probability, 0.0-1.0, that the window's label is correct). Present on success.
   :>json string dashboard_link: A link to the dashboard page containing the full classification result. Present on success when public_dashboard_link is true.
 
   **Request Headers**
@@ -197,6 +197,28 @@ require callers to select a model explicitly:
 
   Every Pangram 4 window includes ``is_humanized`` and
   ``humanizer_score`` (0.0-1.0).
+
+  Pangram 4.1 returns ``version`` 4.1 and the same fields, plus two per
+  window: ``class_probabilities`` and ``calibrated_confidence``. Its
+  ``confidence`` is derived from ``calibrated_confidence``: ``"High"`` at 0.99
+  or more, ``"Medium"`` at 0.90 or more, ``"Low"`` otherwise.
+
+  .. code-block:: json
+
+    {
+      "text": "AI-generated passage.",
+      "label": "AI-Generated",
+      "ai_assistance_score": 0.99,
+      "confidence": "High",
+      "start_index": 0,
+      "end_index": 21,
+      "word_count": 2,
+      "token_length": 4,
+      "is_humanized": false,
+      "humanizer_score": 0.0,
+      "class_probabilities": [0.0, 0.01, 0.99],
+      "calibrated_confidence": 0.995
+    }
 
   **Failed Response**
 

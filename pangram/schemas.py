@@ -26,12 +26,20 @@ class _PredictionWindowRequired(TypedDict):
 class PredictionWindow(_PredictionWindowRequired, total=False):
     """A classified text window.
 
-    ``is_humanized`` and ``humanizer_score`` are present on Pangram 4
+    ``is_humanized`` and ``humanizer_score`` are present on Pangram 4 and 4.1
     responses and omitted from classic-model responses.
+
+    Pangram 4.1 windows also carry ``class_probabilities``, the window's
+    probabilities for Human, AI-Assisted and AI-Generated in that order, and
+    ``calibrated_confidence``, the estimated probability (0.0-1.0) that the
+    window's ``label`` is correct. ``confidence`` is derived from it: High at
+    0.99 or more, Medium at 0.90 or more, Low otherwise.
     """
 
     is_humanized: bool
     humanizer_score: float
+    class_probabilities: list[float]
+    calibrated_confidence: float
 
 
 class _PredictionResultRequired(TypedDict):
