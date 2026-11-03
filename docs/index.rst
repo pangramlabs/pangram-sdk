@@ -10,6 +10,7 @@ Pangram Labs Documentation
 
 .. toctree::
    tutorial
+   media
    api/pangram
    api/rest
 

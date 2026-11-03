@@ -201,6 +201,13 @@ while True:
         break
 ```
 
+### Image 1.0, Flash, and video
+
+The [image and video guide](docs/media.rst) covers model selection, direct file
+uploads, polling, limits, response versions, and video billing. Its Python
+examples use the REST APIs through `requests`; the current SDK does not expose
+image or video methods.
+
 ### Building Documentation
 
 Install docs dependencies and build:
