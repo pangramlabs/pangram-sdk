@@ -133,11 +133,8 @@ Upload an MP4, MOV, or WebM file as ``multipart/form-data`` with a single
 
 Let ``requests`` set the multipart Content-Type and its boundary.
 
-Optional form fields are ``sampling_fps`` (default 3, range 0.1–24),
-``hmm_smoothing`` (default false), and ``detailed_labels`` (default false).
-The effective sampling rate is capped by the video's native frame rate.
-For example, pass ``data={"hmm_smoothing": "true", "detailed_labels": "true"}``
-alongside ``files`` to enable both options where available.
+To include detailed labels, pass ``data={"detailed_labels": "true"}``
+alongside ``files``. Detailed labels are disabled by default.
 
 Detailed labels add likely-human and likely-AI segment labels and duration
 fractions. The default ``1.1`` response keeps the same four overall categories;
@@ -147,9 +144,9 @@ Video limits and results
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 * One file per request, up to 500 MiB (524,288,000 bytes).
-* Up to 360 sampled frames: approximately two minutes at the default 3 FPS.
-  Lower sampling rates can accommodate longer videos, up to the ten-minute
-  source-duration ceiling. Exceeding limits fails the task; the API does not
+* Up to 360 sampled frames: approximately two minutes with standard processing
+  at up to three frames per second. The source-duration ceiling is ten minutes;
+  both limits apply. Exceeding limits fails the task; the API does not
   automatically trim the uploaded video.
 * Poll with the same key. Completed task results are retained for 24 hours.
 
@@ -172,8 +169,8 @@ Image tasks bill one image per successful task at the account's image API rate.
 
 The default video rate is USD 0.05 per second of inspected source duration,
 rounded up to a whole second. A 3.042-second video bills four seconds (USD 0.20);
-a 60.001-second video bills 61 seconds (USD 3.05). Lower sampling FPS does not
-reduce billable source duration. Failed tasks are not charged.
+a 60.001-second video bills 61 seconds (USD 3.05). Billing uses the full
+inspected source duration. Failed tasks are not charged.
 
 Image and video submissions do not accept an idempotency key. Each new POST
 creates another task and can incur another charge. After receiving a task ID,
