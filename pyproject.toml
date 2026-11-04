@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pangram-sdk"
-version = "1.0.0"
+version = "1.1.0"
 description = ""
 authors = ["Max Spero <max@pangramlabs.com>"]
 readme = "README.md"
@@ -12,6 +12,7 @@ packages = [
 python = "^3.10"
 requests = ">=2.33.0,<3.0.0"
 urllib3 = ">=2.7.0,<3.0.0"
+requests-toolbelt = ">=1.0.0,<2.0.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.0"

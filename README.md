@@ -203,10 +203,24 @@ while True:
 
 ### Image 1.0, Flash, and video
 
-The [image and video guide](docs/media.rst) covers model selection, direct file
-uploads, polling, limits, response versions, and video billing. Its Python
-examples use the REST APIs through `requests`; the current SDK does not expose
-image or video methods.
+SDK 1.1.0 adds native image and video methods:
+
+```python
+client = Pangram()
+image = client.predict_image("image.png", model="pangram-image-1")
+flash = client.predict_image("image.png", model="pangram-image-flash-1")
+video = client.predict_video("clip.mp4")
+```
+
+These methods submit once and poll until completion. Images require an explicit
+model selector; `model="default"` keeps the service default (currently Image
+0.2). Video uploads stream from disk and use the API's processing defaults.
+
+For separate submission and polling, use `submit_image()` / `submit_video()`,
+`get_image_status()` / `get_video_status()`, and `wait_for_image()` /
+`wait_for_video()`. Results remain dictionaries, typed as `ImageResult` and
+`VideoResult`. See the [image and video guide](docs/media.rst) for inputs,
+timeouts, limits, nullable provenance results, and billing.
 
 ### Building Documentation
 

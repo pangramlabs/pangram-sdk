@@ -8,6 +8,7 @@ pangram.text\_classifier module
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
 
 pangram.schemas module
 -----------------------
@@ -16,3 +17,16 @@ pangram.schemas module
    :members:
    :undoc-members:
    :show-inheritance:
+
+Media response types
+--------------------
+
+.. automodule:: pangram.media_schemas
+   :members:
+
+Media errors
+------------
+
+.. automodule:: pangram.media
+   :members:
+   :exclude-members: MediaMethods

@@ -1,62 +1,34 @@
 Image 1.0, Flash, and video
 ===========================
 
-The current ``pangram-sdk`` Python client exposes text, document-extraction,
-bulk, and plagiarism methods. This guide calls the image and video REST APIs
-with ``requests``; it does not require or introduce new SDK methods.
+SDK 1.1.0 adds native image and video methods to ``Pangram``. The existing
+text, document-extraction, bulk, and plagiarism methods keep their behavior.
+Use ``predict_image()`` for images and ``predict_video()`` for videos;
+``predict_file()`` and ``predict_files()`` continue to extract text from documents.
 
-Do not pass image model selectors to ``Pangram.predict()`` or
-``Pangram.submit_bulk()``. ``Pangram.list_models()`` discovers text models.
-The ``predict_file()`` and ``predict_files()`` methods extract text from
-documents; they do not classify images or videos.
+Create a client
+---------------
 
-Authentication and polling
---------------------------
-
-Set ``PANGRAM_API_KEY`` to your API key. Image and video use the same
-authentication header. Each task requires the same key for submission and polling.
-
-The following helper waits for an accepted task. Keep its task ID if a local
-timeout occurs and continue polling that task.
+Set ``PANGRAM_API_KEY`` or pass ``api_key`` to the constructor. The SDK uses
+that key for both submission and polling.
 
 .. code-block:: python
 
-    import os
-    import time
+    from pangram import Pangram
 
-    import requests
-
-    image_headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
-
-    def wait_for_task(base_url, task_path, task_id, *, headers, timeout=600):
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
-            response = requests.get(
-                f"{base_url}{task_path}/{task_id}",
-                headers=headers,
-                timeout=30,
-            )
-            response.raise_for_status()
-            result = response.json()
-            if result["stage"] == "STAGE_SUCCESS":
-                return result
-            if result["stage"] == "STAGE_FAILED":
-                raise RuntimeError(result["error"])
-            time.sleep(0.5)
-        raise TimeoutError(f"Task {task_id} is still processing; keep polling it.")
+    client = Pangram()  # Reads PANGRAM_API_KEY.
 
 Image 1.0 and Image Flash 1.0
 -----------------------------
 
-Both models use ``https://image.external-api.pangram.com`` with
-``POST /v1/tasks`` and ``GET /v1/tasks/{task_id}``.
+Select an image model explicitly:
 
 .. list-table:: Image model selection
    :header-rows: 1
    :widths: 35 35 30
 
    * - Model
-     - Request ``model``
+     - ``model`` argument
      - Result ``version``
    * - Pangram Image 1.0
      - ``pangram-image-1``
@@ -64,117 +36,133 @@ Both models use ``https://image.external-api.pangram.com`` with
    * - Pangram Image Flash 1.0
      - ``pangram-image-flash-1``
      - ``Pangram Image Flash 1.0``
+   * - Pangram Image 0.2
+     - ``pangram-image-0.2``
+     - ``Pangram Image 0.2``
 
-The ``model`` field is optional on the REST endpoint, but set it explicitly to
-choose Image 1.0 or Flash. The current production default is Image 0.2.
-Availability can differ by environment; an unavailable model returns HTTP 503.
-
-Submit one base64-encoded image per task. The decoded image limit is 32 MiB,
-and the full JSON body limit is 128 MiB.
+``model="default"`` follows the service default, currently Image 0.2.
+``list_models()`` discovers text models and does not list image models.
 
 .. code-block:: python
 
-    import base64
-    from pathlib import Path
+    result = client.predict_image("image.png", model="pangram-image-1")
+    print(result["prediction"], result["ai_likelihood"])
 
-    image_base_url = "https://image.external-api.pangram.com"
-    image_model = "pangram-image-1"  # Or "pangram-image-flash-1".
+    flash = client.predict_image("image.png", model="pangram-image-flash-1")
+    print(flash["prediction"])
 
-    response = requests.post(
-        f"{image_base_url}/v1/tasks",
-        headers=image_headers,
-        json={
-            "image_b64": base64.b64encode(Path("image.png").read_bytes()).decode("ascii"),
-            "model": image_model,
-        },
-        timeout=60,
-    )
-    response.raise_for_status()
-    image_task_id = response.json()["task_id"]
-    image_result = wait_for_task(
-        image_base_url, "/v1/tasks", image_task_id, headers=image_headers
-    )
-    print(image_result["prediction"], image_result["version"])
+Inputs may be a file path, ``pathlib.Path``, raw bytes, or an open binary file.
+The SDK encodes the bytes as base64 for the Image API. A string is a file path;
+pass raw bytes instead of an already encoded base64 string. The image limit is
+32 MiB. Caller-owned files stay open and are read from their current position.
 
-The image ``prediction`` is one of ``AI Detected``, ``Likely AI``, ``Unsure``,
-``Likely No AI``, ``No AI``, or ``Partially AI``. Results also include
-``ai_likelihood``, ``confidence``, ``detection_source``, ``heatmap``,
-``metadata``, and ``thumbnail``.
+``predict_image()`` submits once and polls, returning an ``ImageResult``
+dictionary. Its ``prediction`` is ``AI Detected``, ``Likely AI``, ``Unsure``,
+``Likely No AI``, ``No AI``, or ``Partially AI``.
 
-When validated AI provenance determines a result, ``detection_source`` is
-``c2pa`` and model-specific scores, confidence, version, and heatmap can be
-``null``. Handle nullable fields rather than assuming every successful task
-contains model output.
+Results include ``ai_likelihood``, ``confidence``, ``detection_source``,
+``version``, ``heatmap``, ``metadata``, and ``thumbnail``. When validated AI
+provenance determines the result, ``detection_source`` is ``c2pa`` and scores,
+confidence, version, and heatmap can be ``None``. Handle these nullable fields.
 
 Video uploads
 -------------
 
-Upload an MP4, MOV, or WebM file as ``multipart/form-data`` with a single
-``file`` field. Customers do not need to host the file or create an S3 URL.
+Pass an MP4, MOV, or WebM file. The SDK streams uploads and uses the API's
+processing defaults. Customers do not need to host the file or supply a URL.
 
 .. code-block:: python
 
-    video_base_url = "https://video.external-api.pangram.com"
-    video_headers = {"x-api-key": os.environ["PANGRAM_API_KEY"]}
+    result = client.predict_video("clip.mp4")
+    print(result["headline"], result["prediction_short"])
+    print(result["fraction_ai"], result["segments"])
 
-    with open("clip.mp4", "rb") as video:
-        response = requests.post(
-            f"{video_base_url}/v1/video/tasks",
-            headers=video_headers,
-            files={"file": ("clip.mp4", video, "video/mp4")},
-            timeout=(10, 300),
-        )
-    response.raise_for_status()
-    video_task_id = response.json()["task_id"]
-    video_result = wait_for_task(
-        video_base_url, "/v1/video/tasks", video_task_id, headers=video_headers
+A video may also be raw bytes or a seekable binary file. Supply ``filename``
+when passing bytes or a stream without a filename:
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    result = client.predict_video(
+        Path("clip.mp4").read_bytes(),
+        filename="clip.mp4",
     )
-    print(video_result["headline"], video_result["prediction_short"])
 
-Let ``requests`` set the multipart Content-Type and its boundary.
+Use a path for large videos to stream from disk. The SDK closes files it opens;
+caller-owned streams remain open and are read from their current position.
 
-Video limits and results
-~~~~~~~~~~~~~~~~~~~~~~~~
+``predict_video()`` returns a ``VideoResult`` dictionary using response schema
+``1.1``. Its overall ``prediction_short`` is ``no_ai``, ``mixed``, ``ai``, or
+``unsure``. Use ``headline`` and ``prediction`` for display.
+
+Results include source duration and dimensions, sampled frames, timeline
+segments, and duration fractions. The top-level ``version`` identifies the
+frame model as ``image-flash-1``, or is ``None`` for a provenance-only result.
+Frame-level prediction labels have their own vocabulary; segment labels can
+include ``likely_human`` and ``likely_ai``.
 
 * One file per request, up to 500 MiB (524,288,000 bytes).
-* Up to 360 sampled frames: approximately two minutes with standard processing
+* At most 360 sampled frames: approximately two minutes with standard processing
   at up to three frames per second. The source-duration ceiling is ten minutes;
-  both limits apply. Exceeding limits fails the task; the API does not
-  automatically trim the uploaded video.
-* Poll with the same key. Completed task results are retained for 24 hours.
+  both limits apply. The API does not automatically trim the uploaded video.
+* Completed results are retained for 24 hours.
 
-The default response schema is ``1.1``. Use ``headline`` and ``prediction``
-for display; ``prediction_short`` is ``no_ai``, ``mixed``, ``ai``, or ``unsure``.
-``frames_processed`` and ``total_frames`` provide progress when available.
+Submission, progress, and resuming
+----------------------------------
 
-Successful responses include ``source.duration_ms``, the sampling settings,
-frame scores, segments, and duration fractions. The ``version`` field identifies
-the frame model as ``image-flash-1`` (or ``null`` for a provenance-only result);
-it is separate from ``schema_version``. The public source fields do not include
-a media preview. Explicit ``?response_version=1.0`` on the polling URL returns
-the legacy presentation, including its original model display name and source
-fields.
+Use separate submission and polling methods to persist the task ID or show
+progress in your application:
 
-Billing and retry behavior
---------------------------
+.. code-block:: python
+
+    task = client.submit_video("clip.mp4")
+    task_id = task["task_id"]  # Persist this ID before waiting.
+
+    status = client.get_video_status(task_id)
+    print(status["stage"])
+    result = client.wait_for_video(task_id, timeout=600)
+
+Images have the matching ``submit_image(image, model=...)``,
+``get_image_status(task_id)``, and ``wait_for_image(task_id)`` methods.
+Status methods return processing, success, or failure dictionaries. Video
+processing responses may include ``frames_processed`` and ``total_frames``.
+Waiting and prediction methods raise ``MediaTaskError`` for failed tasks;
+its ``task_id`` and ``error`` attributes preserve the API details.
+
+``predict_image()`` defaults to a 300-second timeout and polls every 0.5 seconds.
+``predict_video()`` defaults to 600 seconds and polls every second. The prediction
+budget includes submission and polling. Separate submission methods default to
+60 seconds for images and 300 seconds for video uploads. Status requests default
+to ten seconds. Every method accepts a ``timeout`` override; wait and prediction
+methods also accept ``poll_interval`` (minimum 0.1 seconds).
+
+If polling times out, resume the accepted task rather than uploading again:
+
+.. code-block:: python
+
+    from pangram import MediaTaskTimeout
+
+    try:
+        result = client.predict_video("clip.mp4", timeout=60)
+    except MediaTaskTimeout as error:
+        # Save error.task_id if you want to resume later.
+        result = client.wait_for_video(error.task_id, timeout=600)
+
+The SDK retries polling after temporary transport errors and HTTP 429/5xx
+responses, honoring numeric ``Retry-After`` delays. Other API failures raise
+``MediaRequestError``, whose ``status_code`` is available when a response was
+received. File-opening errors use Python's normal file exceptions.
+
+Billing and retries
+-------------------
 
 Image tasks bill one image per successful task at the account's image API rate.
+Video tasks bill USD 0.05 per second of inspected source duration, rounded up to
+a whole second: 3.042 seconds costs USD 0.20 and 60.001 seconds costs USD 3.05.
+Failed tasks are not charged.
 
-The default video rate is USD 0.05 per second of inspected source duration,
-rounded up to a whole second. A 3.042-second video bills four seconds (USD 0.20);
-a 60.001-second video bills 61 seconds (USD 3.05). Billing uses the full
-inspected source duration. Failed tasks are not charged.
-
-Image and video submissions do not accept an idempotency key. Each new POST
-creates another task and can incur another charge. After receiving a task ID,
-poll that task rather than submit the media again because polling timed out.
-
-Request errors use an ``error`` object with ``error``, ``error_code``, and
-``retryable``. A processing failure is returned by GET with HTTP 200 and
-``stage == "STAGE_FAILED"``; the helper above handles that case.
-
-HTTP 401 indicates missing or invalid credentials; 402 indicates insufficient
-API funds; 403 indicates a key that does not own the task; 404 indicates an
-unknown or expired task; 413 indicates an oversized upload; 422 indicates an
-invalid request; 429 indicates a request rate limit; and 503 indicates an
-unavailable feature or service.
+Submissions do not support idempotency keys. The SDK never automatically retries
+a submission. A transport error can leave its outcome unknown; submitting again
+may create a second billable task. Once a task ID is available, use its status
+or wait method instead of resubmitting the media.

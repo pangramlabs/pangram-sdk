@@ -8,6 +8,8 @@ from typing import Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import requests
 
+from pangram.media import MediaMethods
+
 from pangram.schemas import (
     BulkResultItem,
     BulkResultMetadata,
@@ -16,7 +18,7 @@ from pangram.schemas import (
     PredictionResult,
 )
 
-SOURCE_VERSION = "python_sdk_1.0.0"
+SOURCE_VERSION = "python_sdk_1.1.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
@@ -56,10 +58,10 @@ def _without_duplicate_model_selection_warning(
         _MODEL_SELECTION_WARNING_ALREADY_EMITTED.reset(token)
 
 
-class PangramText:
+class PangramText(MediaMethods):
     def __init__(self, api_key: Optional[str] = None) -> None:
         """
-        A classifier for text inputs using the Pangram Labs API.
+        A client for text, image, and video analysis using the Pangram Labs APIs.
 
         :param api_key: Your API key for the Pangram Labs. If not provided, the environment variable PANGRAM_API_KEY will be used.
         :type api_key: str, optional
