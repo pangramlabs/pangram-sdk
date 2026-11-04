@@ -219,8 +219,8 @@ the series without changing the selector. The result's `version` identifies
 the model version used, or is `None` for a provenance-only result.
 
 These methods submit once and poll until completion. Images require an explicit
-model selector; `model="default"` keeps the service default (currently Image
-0.2). Video uploads stream from disk and use the API's processing defaults.
+model selector; `model="default"` uses the service default. Video uploads stream
+from disk and use the API's processing defaults.
 
 For separate submission and polling, use `submit_image()` / `submit_video()`,
 `get_image_status()` / `get_video_status()`, and `wait_for_image()` /

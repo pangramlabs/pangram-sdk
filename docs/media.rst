@@ -40,7 +40,7 @@ Select an image model explicitly:
      - ``pangram-image-0.2``
      - ``Pangram Image 0.2``
 
-``model="default"`` follows the service default, currently Image 0.2.
+``model="default"`` follows the service default.
 ``list_models()`` discovers text models and does not list image models.
 
 ``pangram-image-1`` selects the Image 1 series, just as ``pangram-4`` selects
