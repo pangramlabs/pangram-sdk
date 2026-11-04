@@ -1,5 +1,6 @@
 import inspect
 import os
+import re
 import tempfile
 import unittest
 import warnings
@@ -753,6 +754,35 @@ class TestBulkAPI(unittest.TestCase):
                     text=["hello"],
                     idempotency_key="my-stable-key",
                 )
+
+    def test_submit_bulk_preserves_generated_key_after_service_error(self):
+        pangram_client = Pangram(api_key="test-key")
+        bulk_response = {"bulk_id": "blk_123", "status": "queued"}
+
+        with patch(
+            "pangram.text_classifier.requests.post",
+            side_effect=[
+                MockResponse(status_code=503, text="service unavailable"),
+                MockResponse(status_code=202, json_data=bulk_response),
+            ],
+        ) as mock_post, patch(
+            "pangram.text_classifier.uuid.uuid4", return_value="retry-id"
+        ):
+            with self.assertRaises(ValueError) as error:
+                pangram_client.submit_bulk(model="default", text=["hello"])
+
+            key_match = re.search(r"idempotency_key='([^']+)'", str(error.exception))
+            self.assertIsNotNone(key_match)
+            retry_key = key_match.group(1)
+            result = pangram_client.submit_bulk(
+                model="default", text=["hello"], idempotency_key=retry_key
+            )
+
+        self.assertEqual(result, bulk_response)
+        self.assertEqual(
+            [call.kwargs["headers"]["Idempotency-Key"] for call in mock_post.call_args_list],
+            [retry_key, retry_key],
+        )
 
     def test_submit_bulk_generates_unique_idempotency_key_per_call(self):
         pangram_client = Pangram(api_key="test-key")
