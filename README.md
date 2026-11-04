@@ -201,7 +201,7 @@ while True:
         break
 ```
 
-### Image 1.0, Flash, and video
+### Image and video detection
 
 SDK 1.1.0 adds native image and video methods:
 

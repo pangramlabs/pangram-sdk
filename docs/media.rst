@@ -1,5 +1,5 @@
-Image 1.0, Flash, and video
-===========================
+Image and video detection
+=========================
 
 SDK 1.1.0 adds native image and video methods to ``Pangram``. The existing
 text, document-extraction, bulk, and plagiarism methods keep their behavior.
@@ -18,8 +18,8 @@ that key for both submission and polling.
 
     client = Pangram()  # Reads PANGRAM_API_KEY.
 
-Image 1.0 and Image Flash 1.0
------------------------------
+Image detection
+---------------
 
 Select an image model explicitly:
 
