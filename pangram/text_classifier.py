@@ -18,7 +18,7 @@ from pangram.schemas import (
     PredictionResult,
 )
 
-SOURCE_VERSION = "python_sdk_1.1.0"
+SOURCE_VERSION = "python_sdk_1.1.1"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
