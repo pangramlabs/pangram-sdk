@@ -146,13 +146,12 @@ class MediaMethods:
 
         ``model`` is required: choose ``pangram-image-1``,
         ``pangram-image-flash-1``, or ``pangram-image-0.2``. ``default`` follows
-        the server default (currently Image 0.2). Images are limited to 32 MiB.
+        the server default. Images are limited to 32 MiB.
         Submission is never automatically retried.
 
         :param image: Image path, bytes, or binary file, up to 32 MiB.
         :param model: Required keyword-only image selector: ``pangram-image-1``,
-            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``
-            (currently Image 0.2).
+            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``.
         :param timeout: Keyword-only timeout in seconds for submission;
             defaults to 60. Must be positive and finite.
         :return: A :class:`~pangram.media_schemas.MediaTaskSubmission` dictionary
@@ -401,8 +400,7 @@ class MediaMethods:
 
         :param image: Image path, bytes, or binary file, up to 32 MiB.
         :param model: Required keyword-only image selector: ``pangram-image-1``,
-            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``
-            (currently Image 0.2).
+            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``.
         :param timeout: Keyword-only timeout in seconds for submission and polling combined;
             defaults to 300. Must be positive and finite.
         :param poll_interval: Keyword-only polling delay in seconds; defaults
