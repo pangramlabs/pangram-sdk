@@ -139,6 +139,10 @@ The effective sampling rate is capped by the video's native frame rate.
 For example, pass ``data={"hmm_smoothing": "true", "detailed_labels": "true"}``
 alongside ``files`` to enable both options where available.
 
+Detailed labels add likely-human and likely-AI segment labels and duration
+fractions. The default ``1.1`` response keeps the same four overall categories;
+graded overall verdicts are available only in the legacy ``1.0`` response.
+
 Video limits and results
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -155,9 +159,11 @@ for display; ``prediction_short`` is ``no_ai``, ``mixed``, ``ai``, or ``unsure``
 
 Successful responses include ``source.duration_ms``, the sampling settings,
 frame scores, segments, and duration fractions. The ``version`` field identifies
-the frame model (``Pangram Image Flash 1.0``); it is separate from
-``schema_version``. Explicit ``?response_version=1.0`` on the polling URL returns
-the legacy presentation.
+the frame model as ``image-flash-1`` (or ``null`` for a provenance-only result);
+it is separate from ``schema_version``. The public source fields do not include
+a media preview. Explicit ``?response_version=1.0`` on the polling URL returns
+the legacy presentation, including its original model display name and source
+fields.
 
 Billing and retry behavior
 --------------------------
