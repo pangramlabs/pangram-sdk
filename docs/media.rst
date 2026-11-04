@@ -29,11 +29,11 @@ Select an image model explicitly:
 
    * - Model
      - ``model`` argument
-     - Result ``version``
-   * - Pangram Image 1.0
+     - Example result ``version``
+   * - Pangram Image 1
      - ``pangram-image-1``
      - ``Pangram Image 1.0``
-   * - Pangram Image Flash 1.0
+   * - Pangram Image Flash 1
      - ``pangram-image-flash-1``
      - ``Pangram Image Flash 1.0``
    * - Pangram Image 0.2
@@ -42,6 +42,12 @@ Select an image model explicitly:
 
 ``model="default"`` follows the service default, currently Image 0.2.
 ``list_models()`` discovers text models and does not list image models.
+
+``pangram-image-1`` selects the Image 1 series, just as ``pangram-4`` selects
+the Pangram 4 text series. Minor versions can change within the selected series
+without changing the selector. Read the result's ``version`` field for the model
+version used; it is ``None`` for an image result determined solely by validated
+provenance.
 
 .. code-block:: python
 

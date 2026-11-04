@@ -599,7 +599,7 @@ class PangramText(MediaMethods):
                 - stage (str): The terminal async task stage, normally "STAGE_SUCCESS".
                 - text (str): The analyzed text. Pangram 4 may normalize it
                   before inference; window offsets refer to this returned text.
-                - version (str): The API version identifier (e.g., "4.0").
+                - version (str): The model version used (e.g., "4.0" or "4.1").
                 - headline (str): Classification headline summarizing the result.
                 - prediction (str): Long-form prediction string describing the classification.
                 - prediction_short (str): Short-form prediction string. Pangram

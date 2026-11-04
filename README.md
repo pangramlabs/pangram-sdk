@@ -47,7 +47,7 @@ pangram_client = Pangram()
 
 result = pangram_client.predict(text, model="pangram-4")
 stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
-version = result['version']  # "4.0" for Pangram 4.
+version = result['version']  # Model version used, e.g. "4.0" or "4.1".
 
 # Analysis with AI-assistance detection.
 fraction_ai = result['fraction_ai']
@@ -68,7 +68,9 @@ Use `predict(text, model="pangram-4", public_dashboard_link=True)` or
 `predict_with_dashboard_link(text, model="pangram-4", timeout=300,
 poll_interval=0.5)` to include a `dashboard_link` in the completed result.
 
-Pangram 4 returns `version == "4.0"`. Every Pangram 4 window includes
+`pangram-4` selects the Pangram 4 series. Minor versions can change within the
+series without changing the selector. Read the result's `version` field for the
+model version used, such as `"4.0"` or `"4.1"`. Every Pangram 4 window includes
 `is_humanized` and `humanizer_score`. Pangram 4 uses the single
 `"AI-Assisted"` window label rather than lightly/moderately assisted variants,
 and `confidence` remains a string.
@@ -154,8 +156,8 @@ for failed in results["failed_items"]:
 `model` is keyword-only and applies to the entire bulk job. During the
 compatibility period, omitting it selects `"default"` and emits a
 `DeprecationWarning`; after September 30, 2026, it will be required. Per-item
-model selectors are not supported. Successful Pangram 4 item results use the
-same version 4.0 and window schema described above.
+model selectors are not supported. Successful Pangram 4 item results report the
+model version used in `version` and use the window schema described above.
 
 Every submission sends an `Idempotency-Key` header. Resubmitting the same body
 with the same key replays the original job instead of creating and billing a
@@ -211,6 +213,10 @@ image = client.predict_image("image.png", model="pangram-image-1")
 flash = client.predict_image("image.png", model="pangram-image-flash-1")
 video = client.predict_video("clip.mp4")
 ```
+
+`pangram-image-1` selects the Image 1 series. Minor versions can change within
+the series without changing the selector. The result's `version` identifies
+the model version used, or is `None` for a provenance-only result.
 
 These methods submit once and poll until completion. Images require an explicit
 model selector; `model="default"` keeps the service default (currently Image
