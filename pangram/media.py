@@ -148,6 +148,15 @@ class MediaMethods:
         ``pangram-image-flash-1``, or ``pangram-image-0.2``. ``default`` follows
         the server default (currently Image 0.2). Images are limited to 32 MiB.
         Submission is never automatically retried.
+
+        :param image: Image path, bytes, or binary file, up to 32 MiB.
+        :param model: Required keyword-only image selector: ``pangram-image-1``,
+            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``
+            (currently Image 0.2).
+        :param timeout: Keyword-only timeout in seconds for submission;
+            defaults to 60. Must be positive and finite.
+        :return: A :class:`~pangram.media_schemas.MediaTaskSubmission` dictionary
+            containing ``task_id``. This method does not poll for a result.
         """
         timeout = _positive(timeout, "timeout")
         if not isinstance(model, str) or not model.strip() or len(model.strip()) > 200:
@@ -176,6 +185,15 @@ class MediaMethods:
         for bytes or an unnamed stream. The upload limit is 500 MiB. Processing
         uses server defaults. Borrowed streams remain open and are read from
         their current position. Submission is never automatically retried.
+
+        :param video: MP4, MOV, or WebM path, bytes, or seekable binary file,
+            up to 500 MiB. Paths stream from disk.
+        :param filename: Keyword-only upload filename, including the extension.
+            Required for bytes or an unnamed stream; otherwise inferred.
+        :param timeout: Keyword-only timeout in seconds for upload;
+            defaults to 300. Must be positive and finite.
+        :return: A :class:`~pangram.media_schemas.MediaTaskSubmission` dictionary
+            containing ``task_id``. This method does not poll for a result.
         """
         timeout = _positive(timeout, "timeout")
         with open_media(video) as (file, inferred):
@@ -230,14 +248,33 @@ class MediaMethods:
         return data
 
     def get_image_status(self, task_id: str, *, timeout: float = 10) -> ImageTaskStatus:
-        """Retrieve one image task, including processing or terminal failure status."""
+        """Retrieve one image task, including processing or terminal failure status.
+
+        :param task_id: The task UUID returned by :meth:`submit_image`.
+        :param timeout: Keyword-only timeout in seconds for one status request;
+            defaults to 10. Must be positive and finite.
+        :return: An :class:`~pangram.media_schemas.ImageTaskStatus` dictionary with
+            ``task_id`` and ``stage``. Success includes the image result fields;
+            failure includes an ``error`` object. A failed status is returned
+            without raising ``MediaTaskError``.
+        """
         return cast(
             ImageTaskStatus,
             self._media_status(IMAGE_API_ENDPOINT, "/v1/tasks", task_id, timeout),
         )
 
     def get_video_status(self, task_id: str, *, timeout: float = 10) -> VideoTaskStatus:
-        """Retrieve one video task using the public 1.1 response format."""
+        """Retrieve one video task using the 1.1 response format.
+
+        :param task_id: The task UUID returned by :meth:`submit_video`.
+        :param timeout: Keyword-only timeout in seconds for one status request;
+            defaults to 10. Must be positive and finite.
+        :return: A :class:`~pangram.media_schemas.VideoTaskStatus` dictionary using
+            response schema ``1.1``, with ``task_id`` and ``stage``. Progress
+            includes ``frames_processed`` and ``total_frames`` when available.
+            Success includes the video result fields; failure includes an
+            ``error`` object without raising ``MediaTaskError``.
+        """
         return cast(
             VideoTaskStatus,
             self._media_status(
@@ -293,6 +330,19 @@ class MediaMethods:
 
         Only polling is retried, on transport errors and HTTP 429/5xx responses.
         A failed task raises :class:`MediaTaskError`; it is never resubmitted.
+
+        :param task_id: The task UUID returned by :meth:`submit_image`.
+        :param timeout: Keyword-only timeout in seconds for polling;
+            defaults to 300. Must be positive and finite.
+        :param poll_interval: Keyword-only polling delay in seconds; defaults
+            to 0.5. Must be positive and finite; values below 0.1 become 0.1.
+        :return: An :class:`~pangram.media_schemas.ImageResult` dictionary with
+            ``task_id``, ``stage``, ``prediction``, ``ai_likelihood``,
+            ``confidence``, ``detection_source``, ``version``, ``heatmap``,
+            ``metadata``, and ``thumbnail``. Model scores, confidence, version,
+            and heatmap can be ``None`` for a provenance-only result.
+        :raises MediaTaskError: The task failed; contains ``task_id`` and ``error``.
+        :raises MediaTaskTimeout: Polling timed out; contains ``task_id`` for resuming.
         """
         deadline = time.monotonic() + _positive(timeout, "timeout")
         return cast(
@@ -308,7 +358,22 @@ class MediaMethods:
     def wait_for_video(
         self, task_id: str, *, timeout: float = 600, poll_interval: float = 1
     ) -> VideoResult:
-        """Wait for an accepted video task; timeout and failure preserve its task ID."""
+        """Wait for an accepted video task; timeout and failure preserve its task ID.
+
+        :param task_id: The task UUID returned by :meth:`submit_video`.
+        :param timeout: Keyword-only timeout in seconds for polling;
+            defaults to 600. Must be positive and finite.
+        :param poll_interval: Keyword-only polling delay in seconds; defaults
+            to 1. Must be positive and finite; values below 0.1 become 0.1.
+        :return: A :class:`~pangram.media_schemas.VideoResult` dictionary using
+            response schema ``1.1``, with the overall verdict, source metadata,
+            sampled ``frames``, timeline ``segments``, and duration fractions.
+            The overall ``prediction_short`` is ``no_ai``, ``mixed``, ``ai``,
+            or ``unsure``. The model ``version`` is ``image-flash-1`` or
+            ``None`` for a provenance-only result.
+        :raises MediaTaskError: The task failed; contains ``task_id`` and ``error``.
+        :raises MediaTaskTimeout: Polling timed out; contains ``task_id`` for resuming.
+        """
         deadline = time.monotonic() + _positive(timeout, "timeout")
         return cast(
             VideoResult,
@@ -333,6 +398,22 @@ class MediaMethods:
         ``timeout`` covers submission and polling. If polling expires,
         :class:`MediaTaskTimeout` provides the accepted task ID so you can
         resume with :meth:`wait_for_image` instead of submitting again.
+
+        :param image: Image path, bytes, or binary file, up to 32 MiB.
+        :param model: Required keyword-only image selector: ``pangram-image-1``,
+            ``pangram-image-flash-1``, ``pangram-image-0.2``, or ``default``
+            (currently Image 0.2).
+        :param timeout: Keyword-only timeout in seconds for submission and polling combined;
+            defaults to 300. Must be positive and finite.
+        :param poll_interval: Keyword-only polling delay in seconds; defaults
+            to 0.5. Must be positive and finite; values below 0.1 become 0.1.
+        :return: An :class:`~pangram.media_schemas.ImageResult` dictionary with
+            ``task_id``, ``stage``, ``prediction``, ``ai_likelihood``,
+            ``confidence``, ``detection_source``, ``version``, ``heatmap``,
+            ``metadata``, and ``thumbnail``. Model scores, confidence, version,
+            and heatmap can be ``None`` for a provenance-only result.
+        :raises MediaTaskError: The task failed; contains ``task_id`` and ``error``.
+        :raises MediaTaskTimeout: Polling timed out; contains ``task_id`` for resuming.
         """
         timeout = _positive(timeout, "timeout")
         interval = max(0.1, _positive(poll_interval, "poll_interval"))
@@ -357,7 +438,24 @@ class MediaMethods:
 
         ``timeout`` covers submission and polling. On a polling timeout,
         resume :meth:`wait_for_video` with ``MediaTaskTimeout.task_id``.
-        No video URL or processing options are required.
+        Upload a file directly; the SDK handles submission and polling.
+
+        :param video: MP4, MOV, or WebM path, bytes, or seekable binary file,
+            up to 500 MiB. Paths stream from disk.
+        :param filename: Keyword-only upload filename, including the extension.
+            Required for bytes or an unnamed stream; otherwise inferred.
+        :param timeout: Keyword-only timeout in seconds for submission and polling combined;
+            defaults to 600. Must be positive and finite.
+        :param poll_interval: Keyword-only polling delay in seconds; defaults
+            to 1. Must be positive and finite; values below 0.1 become 0.1.
+        :return: A :class:`~pangram.media_schemas.VideoResult` dictionary using
+            response schema ``1.1``, with the overall verdict, source metadata,
+            sampled ``frames``, timeline ``segments``, and duration fractions.
+            The overall ``prediction_short`` is ``no_ai``, ``mixed``, ``ai``,
+            or ``unsure``. The model ``version`` is ``image-flash-1`` or
+            ``None`` for a provenance-only result.
+        :raises MediaTaskError: The task failed; contains ``task_id`` and ``error``.
+        :raises MediaTaskTimeout: Polling timed out; contains ``task_id`` for resuming.
         """
         timeout = _positive(timeout, "timeout")
         interval = max(0.1, _positive(poll_interval, "poll_interval"))
