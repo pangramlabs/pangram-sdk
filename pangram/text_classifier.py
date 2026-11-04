@@ -104,7 +104,7 @@ class PangramText(MediaMethods):
 
     def list_models(self) -> List[str]:
         """
-        List the detection models available to this API key.
+        List the text detection models available to this API key.
 
         The returned catalog is filtered by the caller's model entitlements and
         current model availability. Preserve the server-provided order and use
