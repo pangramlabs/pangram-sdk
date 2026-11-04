@@ -6,8 +6,7 @@
 Pangram Labs Documentation
 ======================================
 
-**Pangram Labs** provides text, image, and video AI detection through REST APIs
-and the Python SDK.
+**Pangram Labs** can help you detect AI-generated text with a simple REST API or Python integration.
 
 .. toctree::
    tutorial

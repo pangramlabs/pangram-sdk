@@ -21,9 +21,9 @@ my_api_key = ''  # Fill this in with your API key.
 pangram_client = Pangram(api_key=my_api_key)
 ```
 
-### Discover available text models
+### Discover available models
 
-Text model availability is specific to your API key. Use `list_models()` instead of
+Model availability is specific to your API key. Use `list_models()` instead of
 hard-coding a model catalog:
 
 ```

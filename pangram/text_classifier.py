@@ -61,7 +61,7 @@ def _without_duplicate_model_selection_warning(
 class PangramText(MediaMethods):
     def __init__(self, api_key: Optional[str] = None) -> None:
         """
-        A client for text, image, and video analysis using the Pangram Labs APIs.
+        A classifier for text inputs using the Pangram Labs API.
 
         :param api_key: Your API key for the Pangram Labs. If not provided, the environment variable PANGRAM_API_KEY will be used.
         :type api_key: str, optional
@@ -104,7 +104,7 @@ class PangramText(MediaMethods):
 
     def list_models(self) -> List[str]:
         """
-        List the text detection models available to this API key.
+        List the detection models available to this API key.
 
         The returned catalog is filtered by the caller's model entitlements and
         current model availability. Preserve the server-provided order and use
