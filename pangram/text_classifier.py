@@ -8,6 +8,8 @@ from typing import Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import requests
 
+from pangram.media import MediaMethods
+
 from pangram.schemas import (
     BulkResultItem,
     BulkResultMetadata,
@@ -16,7 +18,7 @@ from pangram.schemas import (
     PredictionResult,
 )
 
-SOURCE_VERSION = "python_sdk_1.0.0"
+SOURCE_VERSION = "python_sdk_1.1.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
@@ -56,7 +58,7 @@ def _without_duplicate_model_selection_warning(
         _MODEL_SELECTION_WARNING_ALREADY_EMITTED.reset(token)
 
 
-class PangramText:
+class PangramText(MediaMethods):
     def __init__(self, api_key: Optional[str] = None) -> None:
         """
         A classifier for text inputs using the Pangram Labs API.
@@ -597,7 +599,7 @@ class PangramText:
                 - stage (str): The terminal async task stage, normally "STAGE_SUCCESS".
                 - text (str): The analyzed text. Pangram 4 may normalize it
                   before inference; window offsets refer to this returned text.
-                - version (str): The API version identifier (e.g., "4.0").
+                - version (str): The model version used (e.g., "4.0" or "4.1").
                 - headline (str): Classification headline summarizing the result.
                 - prediction (str): Long-form prediction string describing the classification.
                 - prediction_short (str): Short-form prediction string. Pangram

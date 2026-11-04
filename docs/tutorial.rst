@@ -63,7 +63,7 @@ The SDK submits to Pangram's async inference API and waits for the completed res
     pangram_client = Pangram()
     result = pangram_client.predict(text, model="pangram-4")
     stage = result['stage']  # "STAGE_SUCCESS" after predict() completes.
-    version = result['version']  # "4.0" for Pangram 4.
+    version = result['version']  # Model version used, e.g. "4.0" or "4.1".
 
     # Analysis with AI-assistance detection.
     fraction_ai = result['fraction_ai']
@@ -78,7 +78,9 @@ The SDK submits to Pangram's async inference API and waits for the completed res
         is_humanized = window['is_humanized']
         humanizer_score = window['humanizer_score']  # 0.0-1.0
 
-Pangram 4 returns ``version == "4.0"``. Every Pangram 4 window includes
+``pangram-4`` selects the Pangram 4 series. Minor versions can change within the
+series without changing the selector. Read the result's ``version`` field for the
+model version used, such as ``"4.0"`` or ``"4.1"``. Every Pangram 4 window includes
 ``is_humanized`` and ``humanizer_score``. Pangram 4 window labels
 are ``"AI-Generated"``, ``"AI-Assisted"``, or ``"Human Written"``;
 lightly/moderately assisted variants are not returned. ``confidence`` remains
@@ -165,7 +167,7 @@ and length of submitted items and current system load. Use
 compatibility period, omitting it selects ``"default"`` and emits a
 ``DeprecationWarning``; after September 30, 2026, it will be required.
 Per-item model selectors are not supported. Successful Pangram 4 item results
-use the same version 4.0 and window schema described above.
+report the model version used in ``version`` and use the window schema described above.
 
 Every submission sends an ``Idempotency-Key`` header. Resubmitting the same
 body with the same key replays the original job instead of creating and
