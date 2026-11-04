@@ -133,13 +133,6 @@ Upload an MP4, MOV, or WebM file as ``multipart/form-data`` with a single
 
 Let ``requests`` set the multipart Content-Type and its boundary.
 
-To include detailed labels, pass ``data={"detailed_labels": "true"}``
-alongside ``files``. Detailed labels are disabled by default.
-
-Detailed labels add likely-human and likely-AI segment labels and duration
-fractions. The default ``1.1`` response keeps the same four overall categories;
-graded overall verdicts are available only in the legacy ``1.0`` response.
-
 Video limits and results
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
