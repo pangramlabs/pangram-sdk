@@ -109,9 +109,11 @@ Frame-level prediction labels have their own vocabulary; segment labels can
 include ``likely_human`` and ``likely_ai``.
 
 * One file per request, up to 500 MiB (524,288,000 bytes).
-* At most 360 sampled frames: approximately two minutes with standard processing
-  at up to three frames per second. The source-duration ceiling is ten minutes;
-  both limits apply. The API does not automatically trim the uploaded video.
+* Frame analysis supports up to two minutes for videos at 3 FPS or higher.
+  The API samples three frames per second, up to 360 sampled frames. For
+  lower-frame-rate videos, it samples at the source frame rate.
+* The API does not automatically trim the uploaded video. Files exceeding
+  processing limits fail.
 * Completed results are retained for 24 hours.
 
 Submission, progress, and resuming
