@@ -1,6 +1,12 @@
 Models API
 ==========
 
+For ZDR processing, see :doc:`../zdr`. For credit balance, monthly usage,
+and QPS-limit reads, see :doc:`../account`.
+
+Strict-ZDR keys receive ``403`` from the standard model catalog; obtain an
+approved model selector from support instead of calling ``list_models()``.
+
 Use the Models API to discover the model selectors that an API key can
 currently use. The response is entitlement- and availability-aware; do not
 hard-code the returned catalog or assume that every API key sees the same

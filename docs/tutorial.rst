@@ -32,6 +32,10 @@ Or pass it directly to the constructor:
 Discover available models
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For a strict-ZDR account, follow :doc:`zdr` instead of the standard model
+discovery and prediction examples in this quickstart. :doc:`account` reads
+remain available to those keys.
+
 Model availability is specific to your API key. Use ``list_models()`` instead
 of hard-coding a model catalog:
 
@@ -89,6 +93,15 @@ a string.
 Results remain normal dictionaries. Typed applications can import
 ``PredictionResult``, ``PredictionWindow``, ``BulkResultsPage``, and
 ``BulkResults`` from ``pangram``.
+
+ZDR and account APIs
+~~~~~~~~~~~~~~~~~~~~
+
+See :doc:`zdr` for synchronous zero-data-retention text requests and
+:doc:`account` for credit balances, monthly calling-key usage, and inference
+QPS limits. These guides use direct HTTP calls because the current SDK has no
+native helpers for these routes. ``predict()`` and ``list_models()`` do not
+provide ZDR access for strict-ZDR keys.
 
 Upload files
 ~~~~~~~~~~~~

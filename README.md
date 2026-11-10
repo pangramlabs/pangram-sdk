@@ -21,6 +21,10 @@ my_api_key = ''  # Fill this in with your API key.
 pangram_client = Pangram(api_key=my_api_key)
 ```
 
+For a strict-ZDR account, start with the [ZDR guide](docs/zdr.rst) instead of
+the standard model-discovery and prediction examples below. Read-only
+[balance, usage, and limits](docs/account.rst) are available to those keys too.
+
 ### Discover available models
 
 Model availability is specific to your API key. Use `list_models()` instead of
@@ -78,6 +82,56 @@ and `confidence` remains a string.
 Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 `BulkResults` `TypedDict` contracts.
+
+### Zero data retention (ZDR)
+
+The [ZDR guide](docs/zdr.rst) covers synchronous text analysis through
+`https://text-zdr.external-api.pangram.com/`, content cleanup, billing metadata,
+timeouts, strict-ZDR keys, and the risk of losing a result or being charged
+again after a retry.
+
+There is currently no native ZDR method in the SDK. `predict()` uses the
+standard async API and does not enable ZDR. Use a direct HTTP request:
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://text-zdr.external-api.pangram.com/",
+    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
+    json={"text": "The text to analyze", "model": "pangram-4"},
+    timeout=(10, 610),
+)
+response.raise_for_status()
+result = response.json()
+if result["stage"] != "STAGE_SUCCESS":
+    raise RuntimeError("ZDR analysis did not succeed")
+print(result["prediction_short"])
+```
+
+Use a model enabled for your account. Strict-ZDR keys cannot use `list_models()`;
+contact support to confirm the selector. Do not automatically retry this POST
+or fall back to `predict()`: a lost result cannot be retrieved later, and a
+retry can start another billable analysis.
+
+### Account balance, usage, and limits
+
+The [account API guide](docs/account.rst) documents three read-only endpoints:
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /balance` | Account balances as USD decimal strings, including `subscription_included_balance_usd`. |
+| `GET /usage?month=YYYY-MM` | Calling key's recorded request count and USD cost for one UTC month. |
+| `GET /limits` | Account inference `qps_limit`, including fractional values or `null`. |
+
+These use `https://text.external-api.pangram.com` with the usual `x-api-key`
+header, including for strict-ZDR keys. They do not spend credits or consume
+inference QPS, but have their own read limits. The SDK currently has no native
+helpers for these endpoints; the guide includes complete `requests` examples.
+
+Use `/balance` for remaining credits. `/usage` reports past consumption and is
+limited to the calling key rather than the whole billing account.
 
 ### Upload files
 
