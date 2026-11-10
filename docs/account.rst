@@ -2,8 +2,8 @@ Account balance, usage, and limits
 ==================================
 
 These read-only endpoints use ``https://text.external-api.pangram.com`` and
-your existing ``x-api-key`` header. They also work with strict-ZDR keys and with
-zero or negative balances. They do not run inference, spend credits, or consume
+your existing ``x-api-key`` header. They also work with zero or negative
+balances. They do not run inference, spend credits, or consume
 the account's inference QPS allowance.
 
 SDK 1.2.0 (unreleased) adds ``get_balance()``, ``get_usage()``, and
@@ -116,8 +116,6 @@ automatically retry. Invalid local input raises ``ValueError``; HTTP,
 transport, and malformed-response failures raise ``PangramRequestError``.
 The exception exposes ``status_code`` and a numeric ``retry_after`` delay in
 seconds. On a rate limit, wait for that delay before making another read.
-Use a separate retry policy for reads; retrying a ZDR prediction can incur
-another charge.
 
 All three endpoints share a separate account-read budget. The current
 safeguards allow 60 reads per key per minute, 300 reads across all keys per

@@ -1,6 +1,5 @@
-"""Account-read contracts and ZDR transport/privacy boundaries; no live calls."""
+"""Account-read contracts; no live calls."""
 
-import inspect
 import math
 import unittest
 from unittest.mock import patch
@@ -8,8 +7,8 @@ from unittest.mock import patch
 import requests
 
 from pangram import AccountBalance, AccountLimits, AccountUsage, Pangram, PangramRequestError
-from pangram.text_classifier import API_ENDPOINT, ZDR_API_ENDPOINT
-from tests.pangram_test import MockResponse, pangram_4_success_response
+from pangram.text_classifier import API_ENDPOINT
+from tests.pangram_test import MockResponse
 
 
 class Response(MockResponse):
@@ -134,96 +133,6 @@ class TestAccountReads(unittest.TestCase):
         self.assertIn("subscription_included_balance_usd", AccountBalance.__required_keys__)
         self.assertIn("total_cost_usd", AccountUsage.__required_keys__)
         self.assertIn("qps_limit", AccountLimits.__required_keys__)
-
-
-class TestZDR(unittest.TestCase):
-    def setUp(self):
-        self.client = Pangram(api_key="test-key")
-
-    @patch("pangram.text_classifier.requests.get")
-    @patch("pangram.text_classifier.requests.post")
-    def test_one_post_to_zdr_without_redirects_polling_or_fallback(self, post, get):
-        payload = pangram_4_success_response()
-        post.return_value = Response(payload)
-        self.assertEqual(self.client.predict_zdr("hello", model=" pangram-4 "), payload)
-        post.assert_called_once_with(
-            ZDR_API_ENDPOINT, json={"text": "hello", "model": "pangram-4"},
-            headers={"Content-Type": "application/json", "x-api-key": "test-key"},
-            timeout=(10, 610), allow_redirects=False,
-        )
-        get.assert_not_called()
-
-    @patch("pangram.text_classifier.requests.post")
-    def test_small_timeout_bounds_both_connection_and_read(self, post):
-        post.return_value = Response(pangram_4_success_response())
-        self.client.predict_zdr("hello", model="pangram-4", timeout=0.5)
-        self.assertEqual(post.call_args.kwargs["timeout"], (0.5, 0.5))
-
-    @patch("pangram.text_classifier.requests.get")
-    @patch("pangram.text_classifier.requests.post")
-    def test_timeouts_and_network_errors_never_retry_or_leak_content(self, post, get):
-        for error in [requests.Timeout("secret text test-key"), requests.ConnectionError("secret text test-key")]:
-            with self.subTest(error=type(error).__name__):
-                post.reset_mock()
-                post.side_effect = error
-                expected = TimeoutError if isinstance(error, requests.Timeout) else PangramRequestError
-                with self.assertRaises(expected) as raised:
-                    self.client.predict_zdr("secret text", model="pangram-4")
-                self.assertNotIn("secret text", str(raised.exception))
-                self.assertNotIn("test-key", str(raised.exception))
-                self.assertIn("another charge", str(raised.exception))
-                post.assert_called_once()
-        get.assert_not_called()
-
-    @patch("pangram.text_classifier.requests.post")
-    def test_http_errors_and_redirects_never_retry_or_echo_response(self, post):
-        for status in [307, 401, 402, 403, 429, 503, 504]:
-            with self.subTest(status=status):
-                post.reset_mock()
-                post.return_value = Response(status=status, text="secret text test-key", headers={"Retry-After": "3"})
-                with self.assertRaises(PangramRequestError) as raised:
-                    self.client.predict_zdr("secret text", model="pangram-4")
-                self.assertEqual(raised.exception.status_code, status)
-                self.assertEqual(raised.exception.retry_after, 3)
-                self.assertNotIn("secret text", str(raised.exception))
-                self.assertNotIn("test-key", str(raised.exception))
-                post.assert_called_once()
-
-    @patch("pangram.text_classifier.requests.post")
-    def test_failed_nonterminal_and_malformed_responses_are_not_returned(self, post):
-        for payload in [None, [], {}, {"stage": "STAGE_PREPROCESSING"}, {"stage": "STAGE_FAILED", "headline": "secret text"}]:
-            with self.subTest(payload=payload):
-                post.reset_mock()
-                post.return_value = Response(payload)
-                with self.assertRaises(PangramRequestError) as raised:
-                    self.client.predict_zdr("secret text", model="pangram-4")
-                self.assertNotIn("secret text", str(raised.exception))
-                post.assert_called_once()
-
-    @patch("pangram.text_classifier.requests.post")
-    def test_invalid_json_does_not_echo_response(self, post):
-        post.return_value = Response(text="secret text")
-        post.return_value.json = lambda: (_ for _ in ()).throw(ValueError("secret text"))
-        with self.assertRaises(PangramRequestError) as raised:
-            self.client.predict_zdr("secret text", model="pangram-4")
-        self.assertNotIn("secret text", str(raised.exception))
-
-    @patch("pangram.text_classifier.requests.post")
-    def test_invalid_inputs_never_reach_api(self, post):
-        for text, model in [("", "pangram-4"), ("  ", "pangram-4"), (None, "pangram-4"), ("hello", None), ("hello", ""), ("hello", 4)]:
-            with self.subTest(text=text, model=model), self.assertRaises(ValueError):
-                self.client.predict_zdr(text, model=model)
-        for timeout in [0, -1, math.nan, math.inf, True, "610", None]:
-            with self.subTest(timeout=timeout), self.assertRaises(ValueError):
-                self.client.predict_zdr("hello", model="pangram-4", timeout=timeout)
-        post.assert_not_called()
-
-    def test_model_is_required_and_unsupported_options_are_not_exposed(self):
-        parameters = inspect.signature(Pangram.predict_zdr).parameters
-        self.assertEqual(parameters["model"].kind, inspect.Parameter.KEYWORD_ONLY)
-        self.assertIs(parameters["model"].default, inspect.Parameter.empty)
-        for option in ["public_dashboard_link", "webhook_delivery", "end_user_email", "poll_interval"]:
-            self.assertNotIn(option, parameters)
 
 
 if __name__ == "__main__":

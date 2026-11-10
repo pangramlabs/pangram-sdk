@@ -21,10 +21,6 @@ my_api_key = ''  # Fill this in with your API key.
 pangram_client = Pangram(api_key=my_api_key)
 ```
 
-For a strict-ZDR account, start with the [ZDR guide](docs/zdr.rst) instead of
-the standard model-discovery and prediction examples below. Read-only
-[balance, usage, and limits](docs/account.rst) are available to those keys too.
-
 ### Discover available models
 
 Model availability is specific to your API key. Use `list_models()` instead of
@@ -83,31 +79,6 @@ Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 `BulkResults` `TypedDict` contracts.
 
-### Zero data retention (ZDR)
-
-The [ZDR guide](docs/zdr.rst) covers synchronous text analysis through
-`https://text-zdr.external-api.pangram.com/`, content cleanup, billing metadata,
-timeouts, strict-ZDR keys, and the risk of losing a result or being charged
-again after a retry.
-
-SDK 1.2.0 (unreleased) adds `predict_zdr()`. It uses the dedicated synchronous
-ZDR endpoint. `predict()` continues to use the standard async API.
-
-```python
-from pangram import Pangram
-
-client = Pangram()  # Reads PANGRAM_API_KEY.
-result = client.predict_zdr(
-    "The text to analyze", model="pangram-4", timeout=610,
-)
-print(result["prediction_short"])
-```
-
-Use a model enabled for your account. Strict-ZDR keys cannot use `list_models()`;
-contact support to confirm the selector. Do not automatically retry this POST
-or fall back to `predict()`: a lost result cannot be retrieved later, and a
-retry can start another billable analysis.
-
 ### Account balance, usage, and limits
 
 SDK 1.2.0 (unreleased) adds three read-only methods. The
@@ -131,7 +102,7 @@ limits = client.get_limits()
 ```
 
 These use `https://text.external-api.pangram.com` with the usual `x-api-key`
-header, including for strict-ZDR keys. They do not spend credits or consume
+header. They do not spend credits or consume
 inference QPS, but have their own read limits. These methods make one request
 without automatic retries. `PangramRequestError` exposes `status_code` and
 `retry_after` for handling failures, including HTTP `429`.

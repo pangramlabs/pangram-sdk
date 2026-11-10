@@ -28,14 +28,12 @@ from pangram.schemas import (
 SOURCE_VERSION = "python_sdk_1.2.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
-ZDR_API_ENDPOINT = 'https://text-zdr.external-api.pangram.com/'
 FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
 PLAGIARISM_API_ENDPOINT = 'https://plagiarism.api.pangram.com'
 ASYNC_SUCCESS_STAGE = 'STAGE_SUCCESS'
 ASYNC_FAILED_STAGE = 'STAGE_FAILED'
 BULK_TERMINAL_STATUSES = {'succeeded', 'failed', 'partial'}
 DEFAULT_PREDICT_TIMEOUT_SECONDS = 300
-DEFAULT_ZDR_TIMEOUT_SECONDS = 610
 DEFAULT_BULK_TIMEOUT_SECONDS = 3600
 DEFAULT_POLL_INTERVAL_SECONDS = 0.5
 MIN_POLL_INTERVAL_SECONDS = 0.1
@@ -53,12 +51,11 @@ _MODEL_SELECTION_WARNING_ALREADY_EMITTED: ContextVar[bool] = ContextVar(
 
 
 class PangramRequestError(ValueError):
-    """A request failure from the account or ZDR APIs.
+    """A request failure from the account APIs.
 
     ``status_code`` identifies HTTP errors and may be None for transport or
     response-format failures.
-    ``retry_after`` preserves a numeric Retry-After delay in seconds. It does
-    not make retrying a ZDR submission safe or idempotent.
+    ``retry_after`` preserves a numeric Retry-After delay in seconds.
     """
 
     def __init__(
@@ -196,7 +193,7 @@ class PangramText(MediaMethods):
         """Read account credit balances without spending credits.
 
         USD amounts remain decimal strings, including negative balances.
-        Use Decimal for arithmetic. Available to strict-ZDR keys as well.
+        Use Decimal for arithmetic.
 
         :param timeout: Positive finite HTTP timeout in seconds; defaults to 10.
         :return: Purchased, subscription-included, and available USD balances.
@@ -259,60 +256,6 @@ class PangramText(MediaMethods):
         ):
             raise PangramRequestError("Invalid limits response")
         return cast(AccountLimits, payload)
-
-    def predict_zdr(
-        self, text: str, *, model: str, timeout: float = DEFAULT_ZDR_TIMEOUT_SECONDS
-    ) -> PredictionResult:
-        """Analyze text through the dedicated synchronous ZDR endpoint.
-
-        Sends exactly one POST, without redirects, polling, automatic retries,
-        or fallback to standard inference. Results cannot be recovered after
-        consumption. A retry after any failure may cause another charge.
-        Error messages omit response bodies and submitted content.
-
-        :param text: Non-empty text to analyze.
-        :param model: Required keyword-only selector approved for the account.
-        :param timeout: Positive finite read-inactivity timeout, default 610
-            seconds. Connection establishment is capped at 10 seconds. This
-            is not a total wall-clock deadline.
-        :return: A successful terminal detection result.
-        :rtype: PredictionResult
-        :raises ValueError: If the input is invalid.
-        :raises TimeoutError: If the request times out; it is not retried.
-        :raises PangramRequestError: On HTTP, transport, response-format, or
-            terminal analysis failures. The request is not retried.
-        """
-        if not isinstance(text, str) or not text.strip():
-            raise ValueError("text must be a non-empty string")
-        if not isinstance(model, str) or not model.strip():
-            raise ValueError("model must be a non-empty string")
-        timeout = _positive_timeout(timeout)
-        failure = "No retry was attempted. The result may be unrecoverable; retrying may incur another charge."
-        try:
-            response = requests.post(
-                ZDR_API_ENDPOINT,
-                json={"text": text, "model": model.strip()},
-                headers=self._headers(),
-                timeout=(min(HTTP_REQUEST_TIMEOUT_SECONDS, timeout), timeout),
-                allow_redirects=False,
-            )
-        except requests.Timeout:
-            raise TimeoutError(f"ZDR request timed out. {failure}") from None
-        except requests.RequestException:
-            raise PangramRequestError(f"ZDR request failed. {failure}") from None
-        if response.status_code != 200:
-            raise PangramRequestError(
-                f"ZDR API returned HTTP {response.status_code}. {failure}",
-                status_code=response.status_code,
-                retry_after=_retry_after(response),
-            )
-        try:
-            payload = response.json()
-        except ValueError:
-            raise PangramRequestError(f"ZDR API returned invalid JSON. {failure}") from None
-        if not isinstance(payload, dict) or payload.get("stage") != ASYNC_SUCCESS_STAGE:
-            raise PangramRequestError(f"ZDR API did not return a successful terminal result. {failure}")
-        return cast(PredictionResult, payload)
 
     def list_models(self) -> List[str]:
         """
