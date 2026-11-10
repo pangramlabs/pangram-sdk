@@ -6,8 +6,10 @@ your existing ``x-api-key`` header. They also work with strict-ZDR keys and with
 zero or negative balances. They do not run inference, spend credits, or consume
 the account's inference QPS allowance.
 
-The current SDK has no native methods for these routes. The following HTTP
-examples can be used alongside the SDK with its ``requests`` dependency.
+SDK 1.2.0 (unreleased) adds ``get_balance()``, ``get_usage()``, and
+``get_limits()``. Set ``PANGRAM_API_KEY`` before running these examples.
+Each method returns an ordinary dictionary with a public ``TypedDict``
+contract: ``AccountBalance``, ``AccountUsage``, or ``AccountLimits``.
 
 Balance
 -------
@@ -16,17 +18,11 @@ Use ``GET /balance`` to read the billing account associated with the key.
 
 .. code-block:: python
 
-   import os
    from decimal import Decimal
-   import requests
+   from pangram import Pangram
 
-   response = requests.get(
-       "https://text.external-api.pangram.com/balance",
-       headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-       timeout=(10, 30),
-   )
-   response.raise_for_status()
-   balance = response.json()
+   client = Pangram()
+   balance = client.get_balance()
    available_usd = Decimal(balance["available_balance_usd"])
 
 Example response:
@@ -59,17 +55,10 @@ rejected with ``422``.
 
 .. code-block:: python
 
-   import os
-   import requests
+   from pangram import Pangram
 
-   response = requests.get(
-       "https://text.external-api.pangram.com/usage",
-       headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-       params={"month": "2026-10"},  # Omit params for the current UTC month.
-       timeout=(10, 30),
-   )
-   response.raise_for_status()
-   usage = response.json()
+   client = Pangram()
+   usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
 
 Example response:
 
@@ -102,16 +91,10 @@ limit. Keys on the account share that limit for each metered endpoint.
 
 .. code-block:: python
 
-   import os
-   import requests
+   from pangram import Pangram
 
-   response = requests.get(
-       "https://text.external-api.pangram.com/limits",
-       headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-       timeout=(10, 30),
-   )
-   response.raise_for_status()
-   limits = response.json()
+   client = Pangram()
+   limits = client.get_limits()
 
 Example response:
 
@@ -126,6 +109,15 @@ returned. Public reference: https://docs.pangram.com/api-reference/limits
 
 Errors and read budgets
 -----------------------
+
+Each method accepts a positive finite keyword-only ``timeout`` in seconds,
+defaulting to 10. It makes one HTTP request, disables redirects, and does not
+automatically retry. Invalid local input raises ``ValueError``; HTTP,
+transport, and malformed-response failures raise ``PangramRequestError``.
+The exception exposes ``status_code`` and a numeric ``retry_after`` delay in
+seconds. On a rate limit, wait for that delay before making another read.
+Use a separate retry policy for reads; retrying a ZDR prediction can incur
+another charge.
 
 All three endpoints share a separate account-read budget. The current
 safeguards allow 60 reads per key per minute, 300 reads across all keys per

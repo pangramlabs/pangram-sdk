@@ -15,36 +15,38 @@ enabled for your account and send the selector explicitly.
 Python example
 --------------
 
-The SDK currently has no native ZDR prediction method. ``Pangram.predict()``
-uses the standard async task API; it does not enable ZDR. Use this direct HTTP
-call alongside the SDK instead. ``requests`` is already an SDK dependency.
+SDK 1.2.0 (unreleased) adds ``Pangram.predict_zdr()``. Set
+``PANGRAM_API_KEY`` and pass an explicit model selector. ``Pangram.predict()``
+continues to use the standard async task API.
 
 .. code-block:: python
 
-   import os
-   import requests
+   from pangram import Pangram
 
-   response = requests.post(
-       "https://text-zdr.external-api.pangram.com/",
-       headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-       json={"text": "The text to analyze", "model": "pangram-4"},
-       timeout=(10, 610),
+   client = Pangram()
+   result = client.predict_zdr(
+       "The text to analyze", model="pangram-4", timeout=610,
    )
-   response.raise_for_status()
-   result = response.json()
-   if result["stage"] != "STAGE_SUCCESS":
-       raise RuntimeError("ZDR analysis did not succeed")
    print(result["prediction_short"])
 
-The timeout tuple gives connection establishment 10 seconds and allows 610
-seconds of read inactivity while waiting for the response. It is not a total
-wall-clock deadline or a guarantee of successful completion.
+The default ``timeout=610`` allows 610 seconds of read inactivity while waiting
+for the response. Connection establishment is capped at 10 seconds, or your
+timeout if smaller. This is not a total wall-clock deadline or a guarantee of
+successful completion. The method sends one POST without redirects, polling,
+automatic retries, or fallback to standard inference.
 
 Unlike the standard async API, this call returns the terminal result directly;
 do not poll a task ID. Successful results use the completed text response
 fields documented in :doc:`api/rest`, including ``stage``, ``version``,
-``prediction_short``, and ``windows``. A terminal analysis failure can return
-``STAGE_FAILED``; check ``stage`` as well as the HTTP status.
+``prediction_short``, and ``windows``. The return type is ``PredictionResult``.
+The method raises ``TimeoutError`` on a client timeout and
+``PangramRequestError`` on HTTP, transport, invalid-response, or terminal
+analysis failures. Error messages omit response bodies and submitted content.
+``PangramRequestError.status_code`` exposes HTTP errors; ``retry_after`` exposes
+a numeric ``Retry-After`` delay, without automatically retrying the POST.
+
+When calling the REST API directly, a terminal analysis failure can return
+``STAGE_FAILED`` in HTTP ``200``; check ``stage`` as well as the HTTP status.
 
 Command-line example
 --------------------

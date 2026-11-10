@@ -99,9 +99,9 @@ ZDR and account APIs
 
 See :doc:`zdr` for synchronous zero-data-retention text requests and
 :doc:`account` for credit balances, monthly calling-key usage, and inference
-QPS limits. These guides use direct HTTP calls because the current SDK has no
-native helpers for these routes. ``predict()`` and ``list_models()`` do not
-provide ZDR access for strict-ZDR keys.
+QPS limits. SDK 1.2.0 (unreleased) adds ``predict_zdr()``, ``get_balance()``,
+``get_usage()``, and ``get_limits()`` for these routes. ``predict()`` and
+``list_models()`` do not provide ZDR access for strict-ZDR keys.
 
 Upload files
 ~~~~~~~~~~~~

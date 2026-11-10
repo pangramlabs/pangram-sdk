@@ -90,23 +90,16 @@ The [ZDR guide](docs/zdr.rst) covers synchronous text analysis through
 timeouts, strict-ZDR keys, and the risk of losing a result or being charged
 again after a retry.
 
-There is currently no native ZDR method in the SDK. `predict()` uses the
-standard async API and does not enable ZDR. Use a direct HTTP request:
+SDK 1.2.0 (unreleased) adds `predict_zdr()`. It uses the dedicated synchronous
+ZDR endpoint. `predict()` continues to use the standard async API.
 
 ```python
-import os
-import requests
+from pangram import Pangram
 
-response = requests.post(
-    "https://text-zdr.external-api.pangram.com/",
-    headers={"x-api-key": os.environ["PANGRAM_API_KEY"]},
-    json={"text": "The text to analyze", "model": "pangram-4"},
-    timeout=(10, 610),
+client = Pangram()  # Reads PANGRAM_API_KEY.
+result = client.predict_zdr(
+    "The text to analyze", model="pangram-4", timeout=610,
 )
-response.raise_for_status()
-result = response.json()
-if result["stage"] != "STAGE_SUCCESS":
-    raise RuntimeError("ZDR analysis did not succeed")
 print(result["prediction_short"])
 ```
 
@@ -117,18 +110,31 @@ retry can start another billable analysis.
 
 ### Account balance, usage, and limits
 
-The [account API guide](docs/account.rst) documents three read-only endpoints:
+SDK 1.2.0 (unreleased) adds three read-only methods. The
+[account API guide](docs/account.rst) explains their responses and limits.
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /balance` | Account balances as USD decimal strings, including `subscription_included_balance_usd`. |
-| `GET /usage?month=YYYY-MM` | Calling key's recorded request count and USD cost for one UTC month. |
-| `GET /limits` | Account inference `qps_limit`, including fractional values or `null`. |
+| Method | Endpoint | Returns |
+| --- | --- | --- |
+| `get_balance()` | `GET /balance` | Account balances as USD decimal strings, including `subscription_included_balance_usd`. |
+| `get_usage(month=None)` | `GET /usage?month=YYYY-MM` | Calling key's recorded request count and USD cost for one UTC month. |
+| `get_limits()` | `GET /limits` | Account inference `qps_limit`, including fractional values or `None`. |
+
+```python
+from decimal import Decimal
+from pangram import Pangram
+
+client = Pangram()
+balance = client.get_balance()
+available_usd = Decimal(balance["available_balance_usd"])
+usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
+limits = client.get_limits()
+```
 
 These use `https://text.external-api.pangram.com` with the usual `x-api-key`
 header, including for strict-ZDR keys. They do not spend credits or consume
-inference QPS, but have their own read limits. The SDK currently has no native
-helpers for these endpoints; the guide includes complete `requests` examples.
+inference QPS, but have their own read limits. These methods make one request
+without automatic retries. `PangramRequestError` exposes `status_code` and
+`retry_after` for handling failures, including HTTP `429`.
 
 Use `/balance` for remaining credits. `/usage` reports past consumption and is
 limited to the calling key rather than the whole billing account.
