@@ -80,33 +80,9 @@ exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 
 ### Account balance, usage, and limits
 
-SDK 1.2.0 and later provide three read-only methods. The
-[account API guide](docs/account.rst) explains their responses and limits.
-
-| Method | Endpoint | Returns |
-| --- | --- | --- |
-| `get_balance()` | `GET /balance` | Account balances as USD decimal strings, including `subscription_included_balance_usd`. |
-| `get_usage(month=None)` | `GET /usage?month=YYYY-MM` | Calling key's recorded request count and USD cost for one UTC month. |
-| `get_limits()` | `GET /limits` | Account inference `qps_limit`, including fractional values or `None`. |
-
-```python
-from decimal import Decimal
-from pangram import Pangram
-
-client = Pangram()
-balance = client.get_balance()
-available_usd = Decimal(balance["available_balance_usd"])
-usage = client.get_usage(month="2026-10")  # Omit month for the current UTC month.
-limits = client.get_limits()
-```
-
-These use `https://text.external-api.pangram.com` with the usual `x-api-key`
-header. They do not spend credits or consume inference QPS, but have their own read limits. These methods make one request
-without automatic retries. `PangramRequestError` exposes `status_code` and
-`retry_after` for handling failures, including HTTP `429`.
-
-Use `/balance` for remaining credits. `/usage` reports past consumption and is
-limited to the calling key rather than the whole billing account.
+SDK 1.2.0 and later provide `get_balance()`, `get_usage(month=None)`, and
+`get_limits()`. See the [account API quickstart](docs/account.rst) for an
+example and links to the response documentation.
 
 ### Upload files
 
