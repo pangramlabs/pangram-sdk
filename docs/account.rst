@@ -6,7 +6,7 @@ your existing ``x-api-key`` header. They also work with zero or negative
 balances. They do not run inference, spend credits, or consume
 the account's inference QPS allowance.
 
-SDK 1.2.0 (unreleased) adds ``get_balance()``, ``get_usage()``, and
+SDK 1.2.0 and later provide ``get_balance()``, ``get_usage()``, and
 ``get_limits()``. Set ``PANGRAM_API_KEY`` before running these examples.
 Each method returns an ordinary dictionary with a public ``TypedDict``
 contract: ``AccountBalance``, ``AccountUsage``, or ``AccountLimits``.
@@ -38,8 +38,7 @@ Example response:
 Amounts are USD decimal strings; use ``Decimal`` for calculations.
 ``purchased_balance_usd`` also includes non-subscription grants and adjustments.
 ``available_balance_usd`` is the sum of the two balances, and balances may be
-negative. This is the committed credit balance, not a pending-request
-reservation, invoice amount, or a universal number of remaining scans.
+negative. These amounts reflect committed credits at the time of the request.
 
 Balance is account-wide, so keys on the same billing account see the same
 balance. Public reference: https://docs.pangram.com/api-reference/balance
@@ -70,16 +69,13 @@ Example response:
      "total_cost_usd": "0.750000"
    }
 
-``total_requests`` counts recorded external billable rows across products, not
-all HTTP attempts or bulk parent submissions. ``total_cost_usd`` is a USD
-decimal string summing recorded charges, not an invoice or credit purchase
-total. Historical missing or zero charges are not recalculated at today's
-prices. An unused month returns zero requests and ``"0.000000"`` cost.
+``total_requests`` counts recorded billable requests across products.
+``total_cost_usd`` is a USD decimal string summing their recorded charges.
+An unused month returns zero requests and ``"0.000000"`` cost.
 
 Usage is restricted to the calling key. Other keys on the account and keys
-replaced by rotation have separate histories. Account IDs, key IDs, date
-ranges, daily breakdowns, and product filters are not supported. Use the
-dashboard for account-wide history.
+replaced by rotation have separate histories. Use the dashboard for
+account-wide history.
 
 Public reference: https://docs.pangram.com/api-reference/usage
 
@@ -103,25 +99,22 @@ Example response:
    {"qps_limit": 2.5}
 
 ``qps_limit`` is a JSON number, including fractional values, or ``null`` when
-no account QPS limit is configured. It is not a live remaining-request counter
-or a promise of available service capacity. No bulk or concurrency limits are
-returned. Public reference: https://docs.pangram.com/api-reference/limits
+no account QPS limit is configured. This value describes the configured
+inference rate. Public reference: https://docs.pangram.com/api-reference/limits
 
 Errors and read budgets
 -----------------------
 
 Each method accepts a positive finite keyword-only ``timeout`` in seconds,
-defaulting to 10. It makes one HTTP request, disables redirects, and does not
-automatically retry. Invalid local input raises ``ValueError``; HTTP,
+defaulting to 10. This sets the connection and read-inactivity timeouts; it is
+not a total request deadline. Each method makes one HTTP request, disables
+redirects, and does not automatically retry. Invalid local input raises ``ValueError``; HTTP,
 transport, and malformed-response failures raise ``PangramRequestError``.
 The exception exposes ``status_code`` and a numeric ``retry_after`` delay in
 seconds. On a rate limit, wait for that delay before making another read.
 
-All three endpoints share a separate account-read budget. The current
-safeguards allow 60 reads per key per minute, 300 reads across all keys per
-minute, and two concurrent reads per gateway process. These are process-local
-protective limits, not a distributed account-wide quota or a guaranteed
-allowance. Respect ``Retry-After`` on ``429`` and avoid polling continuously.
+Account reads have rate limits separate from inference. Respect
+``Retry-After`` on HTTP ``429`` and avoid polling continuously.
 
 Responses use ``Cache-Control: no-store``. Avoid shared caching of account data.
 

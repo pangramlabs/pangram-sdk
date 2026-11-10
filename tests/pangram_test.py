@@ -73,9 +73,7 @@ def model_selection_warnings(
         message = str(recorded_warning.message).lower()
         if (
             issubclass(recorded_warning.category, DeprecationWarning)
-            and "model" in message
-            and "required" in message
-            and "september 30" in message
+            and message.startswith("omitting model is deprecated.")
         ):
             matching_warnings.append(recorded_warning)
     return matching_warnings

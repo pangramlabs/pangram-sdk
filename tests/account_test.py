@@ -93,6 +93,7 @@ class TestAccountReads(unittest.TestCase):
             (self.client.get_limits, {"qps_limit": True}),
             (self.client.get_limits, {"qps_limit": "5"}),
             (self.client.get_limits, {"qps_limit": math.inf}),
+            (self.client.get_limits, {"qps_limit": 10 ** 1000}),
             (self.client.get_limits, []),
         ]
         for method, payload in cases:
@@ -124,7 +125,7 @@ class TestAccountReads(unittest.TestCase):
     @patch("pangram.text_classifier.requests.get")
     def test_invalid_timeouts_never_reach_api(self, get):
         for method in [self.client.get_balance, self.client.get_usage, self.client.get_limits]:
-            for timeout in [0, -1, math.nan, math.inf, True, "30", None]:
+            for timeout in [0, -1, math.nan, math.inf, 10 ** 1000, True, "30", None]:
                 with self.subTest(method=method.__name__, timeout=timeout), self.assertRaises(ValueError):
                     method(timeout=timeout)
         get.assert_not_called()

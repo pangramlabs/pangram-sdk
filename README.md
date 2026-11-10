@@ -35,8 +35,7 @@ The returned list preserves the server's model order and only includes models
 that your API key can currently use. The keyword-only `model` argument on text
 and bulk requests is temporarily optional for backward compatibility. Omitting
 it selects Pangram's abstract default and emits a `DeprecationWarning`.
-Explicitly pass `model="default"` or `model="pangram-4"` in new code. After
-September 30, 2026, callers will be required to select a model explicitly.
+Explicitly pass `model="default"` or `model="pangram-4"` in new code.
 
 ### Make a request
 
@@ -81,7 +80,7 @@ exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 
 ### Account balance, usage, and limits
 
-SDK 1.2.0 (unreleased) adds three read-only methods. The
+SDK 1.2.0 and later provide three read-only methods. The
 [account API guide](docs/account.rst) explains their responses and limits.
 
 | Method | Endpoint | Returns |
@@ -102,8 +101,7 @@ limits = client.get_limits()
 ```
 
 These use `https://text.external-api.pangram.com` with the usual `x-api-key`
-header. They do not spend credits or consume
-inference QPS, but have their own read limits. These methods make one request
+header. They do not spend credits or consume inference QPS, but have their own read limits. These methods make one request
 without automatic retries. `PangramRequestError` exposes `status_code` and
 `retry_after` for handling failures, including HTTP `429`.
 
@@ -186,7 +184,7 @@ for failed in results["failed_items"]:
 
 `model` is keyword-only and applies to the entire bulk job. During the
 compatibility period, omitting it selects `"default"` and emits a
-`DeprecationWarning`; after September 30, 2026, it will be required. Per-item
+`DeprecationWarning`. Per-item
 model selectors are not supported. Successful Pangram 4 item results report the
 model version used in `version` and use the window schema described above.
 

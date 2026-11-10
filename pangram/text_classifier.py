@@ -42,7 +42,7 @@ MAX_BULK_PAGE_LIMIT = 1000
 MAX_IDEMPOTENCY_KEY_LENGTH = 255
 MODEL_SELECTION_DEPRECATION_MESSAGE = (
     "Omitting model is deprecated. Pass model=\"default\" or another identifier "
-    "returned by list_models(). Model will be required after September 30, 2026."
+    "returned by list_models()."
 )
 _MODEL_SELECTION_WARNING_ALREADY_EMITTED: ContextVar[bool] = ContextVar(
     "pangram_model_selection_warning_already_emitted",
@@ -66,13 +66,17 @@ class PangramRequestError(ValueError):
         self.retry_after = retry_after
 
 
+def _finite_number(value: object) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
 def _positive_timeout(value: float) -> float:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, (int, float))
-        or not math.isfinite(value)
-        or value <= 0
-    ):
+    if not _finite_number(value) or value <= 0:
         raise ValueError("timeout must be a finite number greater than zero")
     return float(value)
 
@@ -250,10 +254,7 @@ class PangramText(MediaMethods):
         """
         payload = self._get_account_response("limits", timeout=timeout)
         value = payload.get("qps_limit")
-        if "qps_limit" not in payload or (
-            value is not None
-            and (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value))
-        ):
+        if "qps_limit" not in payload or (value is not None and not _finite_number(value)):
             raise PangramRequestError("Invalid limits response")
         return cast(AccountLimits, payload)
 
@@ -332,8 +333,7 @@ class PangramText(MediaMethods):
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Pass ``default`` to use Pangram's
                       current default model. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param text: A list of input texts to analyze.
         :type text: List[str], optional
@@ -740,8 +740,7 @@ class PangramText(MediaMethods):
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Pass ``default`` to use Pangram's
                       current default model. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to False.
         :type public_dashboard_link: bool
@@ -902,21 +901,19 @@ class PangramText(MediaMethods):
         .. deprecated::
            This compatibility alias forwards to :meth:`predict`. Use
            :meth:`predict` directly for Pangram's current response schema.
-           This method may be removed on August 1, 2026.
 
         :param text: The text to be classified.
         :type text: str
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :return: The same classification result returned by :meth:`predict`.
         :rtype: PredictionResult
         """
         warnings.warn(
             "predict_short() is deprecated and forwards to predict(). "
-            "Use predict() instead. This method may be removed on August 1, 2026.",
+            "Use predict() instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -941,15 +938,13 @@ class PangramText(MediaMethods):
         .. deprecated::
            This compatibility method forwards to :meth:`predict` once per
            input text. Use :meth:`submit_bulk` for asynchronous bulk jobs or
-           :meth:`predict` for one-off calls. This method may be removed on
-           August 1, 2026.
+           :meth:`predict` for one-off calls.
 
         :param text_batch: A list of strings to be classified.
         :type text_batch: List[str]
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :return: A list of classification results from the API for each text in the batch.
                  Each result is a dict with the same fields as returned by predict().
@@ -957,8 +952,7 @@ class PangramText(MediaMethods):
         """
         warnings.warn(
             "batch_predict() is deprecated and forwards to predict() once per input text. "
-            "Use submit_bulk() for asynchronous bulk jobs or predict() for one-off calls. "
-            "This method may be removed on August 1, 2026.",
+            "Use submit_bulk() for asynchronous bulk jobs or predict() for one-off calls.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -992,8 +986,7 @@ class PangramText(MediaMethods):
         :type text: str
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
         :type timeout: float
