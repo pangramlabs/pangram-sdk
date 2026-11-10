@@ -1,11 +1,14 @@
 """Define the public objects available from ``import pangram``."""
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 __author__ = "Max Spero"
 __email__ = "max@pangram.com"
 __license__ = "MIT"
 
 from pangram.schemas import (
+    AccountBalance,
+    AccountLimits,
+    AccountUsage,
     BulkResultItem,
     BulkResultMetadata,
     BulkResults,
@@ -13,7 +16,7 @@ from pangram.schemas import (
     PredictionResult,
     PredictionWindow,
 )
-from pangram.text_classifier import PangramText
+from pangram.text_classifier import PangramRequestError, PangramText
 from pangram.media import MediaRequestError, MediaTaskError, MediaTaskTimeout
 from pangram.media_schemas import (
     MediaError,
@@ -31,6 +34,10 @@ from pangram.media_schemas import (
 Pangram = PangramText
 
 __all__ = [
+    "AccountBalance",
+    "AccountLimits",
+    "AccountUsage",
+    "PangramRequestError",
     "Pangram",
     "PangramText",
     "BulkResultItem",

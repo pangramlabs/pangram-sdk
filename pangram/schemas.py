@@ -3,6 +3,9 @@
 from typing import TypedDict
 
 __all__ = [
+    "AccountBalance",
+    "AccountUsage",
+    "AccountLimits",
     "BulkResultItem",
     "BulkResultMetadata",
     "BulkResults",
@@ -10,6 +13,28 @@ __all__ = [
     "PredictionResult",
     "PredictionWindow",
 ]
+
+
+class AccountBalance(TypedDict):
+    """Account credit balances as USD decimal strings, which may be negative."""
+
+    purchased_balance_usd: str
+    subscription_included_balance_usd: str
+    available_balance_usd: str
+
+
+class AccountUsage(TypedDict):
+    """One calling key's recorded external billable usage in a UTC month."""
+
+    month: str
+    total_requests: int
+    total_cost_usd: str
+
+
+class AccountLimits(TypedDict):
+    """Configured account inference QPS, or None when no limit is configured."""
+
+    qps_limit: float | None
 
 
 class _PredictionWindowRequired(TypedDict):

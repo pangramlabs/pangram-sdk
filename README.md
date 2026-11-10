@@ -35,8 +35,7 @@ The returned list preserves the server's model order and only includes models
 that your API key can currently use. The keyword-only `model` argument on text
 and bulk requests is temporarily optional for backward compatibility. Omitting
 it selects Pangram's abstract default and emits a `DeprecationWarning`.
-Explicitly pass `model="default"` or `model="pangram-4"` in new code. After
-September 30, 2026, callers will be required to select a model explicitly.
+Explicitly pass `model="default"` or `model="pangram-4"` in new code.
 
 ### Make a request
 
@@ -78,6 +77,12 @@ and `confidence` remains a string.
 Results remain normal dictionaries. For typed applications, the package
 exports `PredictionResult`, `PredictionWindow`, `BulkResultsPage`, and
 `BulkResults` `TypedDict` contracts.
+
+### Account balance, usage, and limits
+
+SDK 1.2.0 and later provide `get_balance()`, `get_usage(month=None)`, and
+`get_limits()`. See the [account API quickstart](docs/account.rst) for an
+example and links to the response documentation.
 
 ### Upload files
 
@@ -155,7 +160,7 @@ for failed in results["failed_items"]:
 
 `model` is keyword-only and applies to the entire bulk job. During the
 compatibility period, omitting it selects `"default"` and emits a
-`DeprecationWarning`; after September 30, 2026, it will be required. Per-item
+`DeprecationWarning`. Per-item
 model selectors are not supported. Successful Pangram 4 item results report the
 model version used in `version` and use the window schema described above.
 

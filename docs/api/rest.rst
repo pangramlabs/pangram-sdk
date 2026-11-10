@@ -1,6 +1,8 @@
 Models API
 ==========
 
+For credit balance, monthly usage, and QPS-limit reads, see :doc:`../account`.
+
 Use the Models API to discover the model selectors that an API key can
 currently use. The response is entitlement- and availability-aware; do not
 hard-code the returned catalog or assume that every API key sees the same
@@ -48,8 +50,7 @@ send one of the values returned by the Models API.
 The Python SDK exposes ``model`` as a keyword-only argument. For backward
 compatibility, omitting it currently selects ``"default"`` and emits a
 ``DeprecationWarning``. Explicitly pass ``model="default"`` or
-``model="pangram-4"`` in new code. After September 30, 2026, the SDK will
-require callers to select a model explicitly:
+``model="pangram-4"`` in new code:
 
 .. code:: python
 
@@ -237,7 +238,7 @@ supported. The REST endpoint accepts an omitted selector only for backward
 compatibility and resolves it to ``"default"``. New integrations should send it
 explicitly. The Python SDK's keyword-only ``model`` argument is temporarily
 optional: omission selects ``"default"`` and emits a ``DeprecationWarning``.
-After September 30, 2026, it will be required:
+Pass a model explicitly in new code:
 
 .. code:: python
 

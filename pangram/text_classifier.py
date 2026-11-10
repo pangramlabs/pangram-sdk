@@ -1,6 +1,10 @@
 from contextlib import contextmanager
 from contextvars import ContextVar
+from datetime import date
+from decimal import Decimal, InvalidOperation
+import math
 import os
+import re
 import time
 import uuid
 import warnings
@@ -11,6 +15,9 @@ import requests
 from pangram.media import MediaMethods
 
 from pangram.schemas import (
+    AccountBalance,
+    AccountLimits,
+    AccountUsage,
     BulkResultItem,
     BulkResultMetadata,
     BulkResults,
@@ -18,7 +25,7 @@ from pangram.schemas import (
     PredictionResult,
 )
 
-SOURCE_VERSION = "python_sdk_1.1.1"
+SOURCE_VERSION = "python_sdk_1.2.0"
 
 API_ENDPOINT = 'https://text.external-api.pangram.com'
 FILE_UPLOAD_API_ENDPOINT = 'https://file-external.api.pangram.com'
@@ -35,12 +42,70 @@ MAX_BULK_PAGE_LIMIT = 1000
 MAX_IDEMPOTENCY_KEY_LENGTH = 255
 MODEL_SELECTION_DEPRECATION_MESSAGE = (
     "Omitting model is deprecated. Pass model=\"default\" or another identifier "
-    "returned by list_models(). Model will be required after September 30, 2026."
+    "returned by list_models()."
 )
 _MODEL_SELECTION_WARNING_ALREADY_EMITTED: ContextVar[bool] = ContextVar(
     "pangram_model_selection_warning_already_emitted",
     default=False,
 )
+
+
+class PangramRequestError(ValueError):
+    """A request failure from the account APIs.
+
+    ``status_code`` identifies HTTP errors and may be None for transport or
+    response-format failures.
+    ``retry_after`` preserves a numeric Retry-After delay in seconds.
+    """
+
+    def __init__(
+        self, message: str, *, status_code: Optional[int] = None, retry_after: float = 0
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.retry_after = retry_after
+
+
+def _finite_number(value: object) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _positive_timeout(value: float) -> float:
+    if not _finite_number(value) or value <= 0:
+        raise ValueError("timeout must be a finite number greater than zero")
+    return float(value)
+
+
+def _valid_month(value: object) -> bool:
+    if not isinstance(value, str) or re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", value) is None:
+        return False
+    try:
+        date.fromisoformat(value + "-01")
+    except ValueError:
+        return False
+    return True
+
+
+def _decimal_string(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        return Decimal(value).is_finite()
+    except InvalidOperation:
+        return False
+
+
+def _retry_after(response: requests.Response) -> float:
+    try:
+        delay = float(response.headers.get("Retry-After", "0"))
+    except (ValueError, TypeError):
+        return 0
+    return delay if math.isfinite(delay) and delay > 0 else 0
 
 
 @contextmanager
@@ -101,6 +166,97 @@ class PangramText(MediaMethods):
         if isinstance(response_json, dict) and "error" in response_json:
             raise ValueError(f"Error returned by API: {response_json['error']}")
         return response_json
+
+    def _get_account_response(
+        self, path: str, *, timeout: float, month: Optional[str] = None
+    ) -> Dict[str, object]:
+        timeout = _positive_timeout(timeout)
+        try:
+            response = requests.get(
+                f"{API_ENDPOINT}/{path}",
+                headers=self._auth_headers(),
+                params={"month": month} if month is not None else None,
+                timeout=timeout,
+                allow_redirects=False,
+            )
+        except requests.RequestException as exc:
+            raise PangramRequestError(f"Account API request failed: {exc}") from exc
+        try:
+            payload = self._parse_response_json(response)
+        except ValueError as exc:
+            raise PangramRequestError(
+                str(exc), status_code=response.status_code, retry_after=_retry_after(response)
+            ) from exc
+        if not isinstance(payload, dict):
+            raise PangramRequestError("Invalid account API response")
+        return cast(Dict[str, object], payload)
+
+    def get_balance(
+        self, *, timeout: float = HTTP_REQUEST_TIMEOUT_SECONDS
+    ) -> AccountBalance:
+        """Read account credit balances without spending credits.
+
+        USD amounts remain decimal strings, including negative balances.
+        Use Decimal for arithmetic.
+
+        :param timeout: Positive finite HTTP timeout in seconds; defaults to 10.
+        :return: Purchased, subscription-included, and available USD balances.
+        :rtype: AccountBalance
+        :raises PangramRequestError: On HTTP, transport, or response errors.
+        """
+        payload = self._get_account_response("balance", timeout=timeout)
+        if not all(_decimal_string(payload.get(field)) for field in AccountBalance.__required_keys__):
+            raise PangramRequestError("Invalid balance response: expected USD decimal strings")
+        return cast(AccountBalance, payload)
+
+    def get_usage(
+        self, month: Optional[str] = None, *, timeout: float = HTTP_REQUEST_TIMEOUT_SECONDS
+    ) -> AccountUsage:
+        """Read this key's recorded billable usage for one UTC calendar month.
+
+        This is calling-key usage, not account-wide history or remaining
+        credit. Future months are rejected by the API.
+
+        :param month: YYYY-MM, or None for the current UTC month.
+        :param timeout: Positive finite HTTP timeout in seconds; defaults to 10.
+        :return: Month, recorded request count, and cost as a USD decimal string.
+        :rtype: AccountUsage
+        :raises ValueError: If month or timeout is invalid.
+        :raises PangramRequestError: On HTTP, transport, or response errors.
+        """
+        if month is not None and not _valid_month(month):
+            raise ValueError("month must be a valid calendar month in YYYY-MM form")
+        payload = self._get_account_response("usage", timeout=timeout, month=month)
+        count = payload.get("total_requests")
+        if (
+            not _valid_month(payload.get("month"))
+            or (month is not None and payload.get("month") != month)
+            or isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+            or not _decimal_string(payload.get("total_cost_usd"))
+        ):
+            raise PangramRequestError("Invalid usage response")
+        return cast(AccountUsage, payload)
+
+    def get_limits(
+        self, *, timeout: float = HTTP_REQUEST_TIMEOUT_SECONDS
+    ) -> AccountLimits:
+        """Read the account's configured inference QPS limit.
+
+        Fractional values and None are preserved. This is not remaining
+        capacity, a live counter, or the account-read allowance.
+
+        :param timeout: Positive finite HTTP timeout in seconds; defaults to 10.
+        :return: qps_limit as a number, or None when unconfigured.
+        :rtype: AccountLimits
+        :raises PangramRequestError: On HTTP, transport, or response errors.
+        """
+        payload = self._get_account_response("limits", timeout=timeout)
+        value = payload.get("qps_limit")
+        if "qps_limit" not in payload or (value is not None and not _finite_number(value)):
+            raise PangramRequestError("Invalid limits response")
+        return cast(AccountLimits, payload)
 
     def list_models(self) -> List[str]:
         """
@@ -177,8 +333,7 @@ class PangramText(MediaMethods):
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Pass ``default`` to use Pangram's
                       current default model. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param text: A list of input texts to analyze.
         :type text: List[str], optional
@@ -585,8 +740,7 @@ class PangramText(MediaMethods):
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Pass ``default`` to use Pangram's
                       current default model. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param public_dashboard_link: Whether to include a public dashboard link in the completed response. Defaults to False.
         :type public_dashboard_link: bool
@@ -747,21 +901,19 @@ class PangramText(MediaMethods):
         .. deprecated::
            This compatibility alias forwards to :meth:`predict`. Use
            :meth:`predict` directly for Pangram's current response schema.
-           This method may be removed on August 1, 2026.
 
         :param text: The text to be classified.
         :type text: str
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :return: The same classification result returned by :meth:`predict`.
         :rtype: PredictionResult
         """
         warnings.warn(
             "predict_short() is deprecated and forwards to predict(). "
-            "Use predict() instead. This method may be removed on August 1, 2026.",
+            "Use predict() instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -786,15 +938,13 @@ class PangramText(MediaMethods):
         .. deprecated::
            This compatibility method forwards to :meth:`predict` once per
            input text. Use :meth:`submit_bulk` for asynchronous bulk jobs or
-           :meth:`predict` for one-off calls. This method may be removed on
-           August 1, 2026.
+           :meth:`predict` for one-off calls.
 
         :param text_batch: A list of strings to be classified.
         :type text_batch: List[str]
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :return: A list of classification results from the API for each text in the batch.
                  Each result is a dict with the same fields as returned by predict().
@@ -802,8 +952,7 @@ class PangramText(MediaMethods):
         """
         warnings.warn(
             "batch_predict() is deprecated and forwards to predict() once per input text. "
-            "Use submit_bulk() for asynchronous bulk jobs or predict() for one-off calls. "
-            "This method may be removed on August 1, 2026.",
+            "Use submit_bulk() for asynchronous bulk jobs or predict() for one-off calls.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -837,8 +986,7 @@ class PangramText(MediaMethods):
         :type text: str
         :param model: Detection model identifier returned by
                       :meth:`list_models`. Omitting this argument is
-                      deprecated and will no longer be supported after
-                      September 30, 2026.
+                      deprecated; pass a selector explicitly in new code.
         :type model: str, optional
         :param timeout: Maximum seconds to wait for the async task to complete. Defaults to 300.
         :type timeout: float

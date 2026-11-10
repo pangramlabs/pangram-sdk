@@ -45,8 +45,6 @@ API key can currently use. The keyword-only ``model`` argument on text and bulk
 requests is temporarily optional for backward compatibility. Omitting it
 selects Pangram's abstract default and emits a ``DeprecationWarning``.
 Explicitly pass ``model="default"`` or ``model="pangram-4"`` in new code.
-After September 30, 2026, callers will be required to select a model
-explicitly.
 
 Make a request
 ~~~~~~~~~~~~~~
@@ -89,6 +87,13 @@ a string.
 Results remain normal dictionaries. Typed applications can import
 ``PredictionResult``, ``PredictionWindow``, ``BulkResultsPage``, and
 ``BulkResults`` from ``pangram``.
+
+Account APIs
+~~~~~~~~~~~~
+
+See :doc:`account` for credit balances, monthly calling-key usage, and
+inference QPS limits. SDK 1.2.0 and later provide ``get_balance()``,
+``get_usage()``, and ``get_limits()`` for these routes.
 
 Upload files
 ~~~~~~~~~~~~
@@ -165,7 +170,7 @@ and length of submitted items and current system load. Use
 
 ``model`` is keyword-only and applies to the entire bulk job. During the
 compatibility period, omitting it selects ``"default"`` and emits a
-``DeprecationWarning``; after September 30, 2026, it will be required.
+``DeprecationWarning``.
 Per-item model selectors are not supported. Successful Pangram 4 item results
 report the model version used in ``version`` and use the window schema described above.
 

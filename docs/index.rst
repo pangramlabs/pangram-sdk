@@ -11,6 +11,7 @@ Pangram Labs Documentation
 .. toctree::
    tutorial
    media
+   account
    api/pangram
    api/rest
 
