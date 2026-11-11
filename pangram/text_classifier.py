@@ -385,9 +385,15 @@ class PangramText(MediaMethods):
                 "Pangram API request failed while submitting bulk job "
                 f"(retry safely by resubmitting with idempotency_key={resolved_idempotency_key!r}): {exc}"
             ) from exc
-        response_json = self._parse_response_json(response, expected_status_codes=(202,))
-        if not isinstance(response_json, dict):
-            raise ValueError(f"Error returned by API: invalid bulk response: {response_json}")
+        try:
+            response_json = self._parse_response_json(response, expected_status_codes=(202,))
+            if not isinstance(response_json, dict):
+                raise ValueError(f"Error returned by API: invalid bulk response: {response_json}")
+        except ValueError as exc:
+            raise ValueError(
+                f"{exc} (submitted with idempotency_key={resolved_idempotency_key!r}; "
+                "reuse this key with the same body if retrying)"
+            ) from exc
         return cast(Dict[str, object], response_json)
 
     def _fetch_bulk_status(
