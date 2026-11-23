@@ -566,6 +566,8 @@ class PangramText(MediaMethods):
                             if the API returns an error.
         :raises TimeoutError: If the bulk job does not complete before timeout.
         """
+        if not _finite_number(timeout):
+            raise ValueError("timeout must be a finite number greater than zero")
         if timeout <= 0:
             raise ValueError("timeout must be greater than 0")
         if poll_interval < 0:
@@ -701,6 +703,8 @@ class PangramText(MediaMethods):
         timeout: float,
         poll_interval: float,
     ) -> PredictionResult:
+        if not _finite_number(timeout):
+            raise ValueError("timeout must be a finite number greater than zero")
         if timeout <= 0:
             raise ValueError("timeout must be greater than 0")
         if poll_interval < 0:
