@@ -957,6 +957,8 @@ class PangramText(MediaMethods):
             stacklevel=2,
         )
         normalized_model = self._resolve_model(model)
+        if isinstance(text_batch, str):
+            text_batch = [text_batch]
         results = []
         with _without_duplicate_model_selection_warning(normalized_model):
             for text in text_batch:
