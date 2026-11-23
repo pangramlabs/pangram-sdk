@@ -489,12 +489,30 @@ class PangramText(MediaMethods):
         response_json = self._parse_response_json(response)
         if not isinstance(response_json, dict):
             raise ValueError(f"Error returned by API: invalid bulk results response: {response_json}")
-        return cast(BulkResultsPage, response_json)
+        page = cast(BulkResultsPage, response_json)
+        total_items = page.get("total_items")
+        if (
+            isinstance(total_items, bool)
+            or not isinstance(total_items, int)
+            or total_items < 0
+        ):
+            raise ValueError(
+                "Invalid bulk results response: expected a non-negative integer total_items"
+            )
+        if not isinstance(page.get("items"), list) or not isinstance(
+            page.get("failed_items"), list
+        ):
+            raise ValueError(
+                "Invalid bulk results response: expected items and failed_items lists"
+            )
+        return page
 
     def get_bulk_results(
         self,
         bulk_id: str,
         page_size: int = MAX_BULK_PAGE_LIMIT,
+        *,
+        timeout: float = DEFAULT_BULK_TIMEOUT_SECONDS,
     ) -> BulkResults:
         """
         Fetch all available results for a Bulk API job.
@@ -510,6 +528,8 @@ class PangramText(MediaMethods):
         :param page_size: Number of submitted item slots to request per API call.
                           The API allows up to 1000.
         :type page_size: int
+        :param timeout: Maximum seconds to spend fetching all pages. Defaults to 3600.
+        :type timeout: float
         :return: Aggregated bulk result response containing ``bulk_id``,
                  ``total_items``, ``items``, and ``failed_items``.
         :rtype: BulkResults
@@ -519,6 +539,7 @@ class PangramText(MediaMethods):
         if page_size < 1 or page_size > MAX_BULK_PAGE_LIMIT:
             raise ValueError(f"page_size must be between 1 and {MAX_BULK_PAGE_LIMIT}")
 
+        deadline = time.monotonic() + _positive_timeout(timeout)
         offset = 0
         total_items: Optional[int] = None
         items: List[BulkResultItem] = []
@@ -526,9 +547,18 @@ class PangramText(MediaMethods):
         response_bulk_id = bulk_id
 
         while total_items is None or offset < total_items:
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    f"Pangram bulk results for {bulk_id} did not complete within {timeout:.0f}s"
+                )
             page = self.get_bulk_results_page(bulk_id, offset=offset, limit=page_size)
+            page_total = page["total_items"]
+            if total_items is not None and page_total != total_items:
+                raise ValueError(
+                    "Invalid bulk results response: total_items changed between pages"
+                )
+            total_items = page_total
             response_bulk_id = page["bulk_id"]
-            total_items = page["total_items"]
             items.extend(page["items"])
             failed_items.extend(page["failed_items"])
             offset += page_size
